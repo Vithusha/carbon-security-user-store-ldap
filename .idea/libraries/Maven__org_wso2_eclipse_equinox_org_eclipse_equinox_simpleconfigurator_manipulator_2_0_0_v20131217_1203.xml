@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.wso2.eclipse.equinox:org.eclipse.equinox.simpleconfigurator.manipulator:2.0.0.v20131217-1203">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/wso2/eclipse/equinox/org.eclipse.equinox.simpleconfigurator.manipulator/2.0.0.v20131217-1203/org.eclipse.equinox.simpleconfigurator.manipulator-2.0.0.v20131217-1203.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/wso2/eclipse/equinox/org.eclipse.equinox.simpleconfigurator.manipulator/2.0.0.v20131217-1203/org.eclipse.equinox.simpleconfigurator.manipulator-2.0.0.v20131217-1203-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/wso2/eclipse/equinox/org.eclipse.equinox.simpleconfigurator.manipulator/2.0.0.v20131217-1203/org.eclipse.equinox.simpleconfigurator.manipulator-2.0.0.v20131217-1203-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
