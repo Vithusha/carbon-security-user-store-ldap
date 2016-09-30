@@ -22,11 +22,15 @@ import org.slf4j.LoggerFactory;
 import org.wso2.carbon.security.caas.user.core.bean.Group;
 import org.wso2.carbon.security.caas.user.core.bean.User;
 import org.wso2.carbon.security.caas.user.core.config.IdentityConnectorConfig;
+import org.wso2.carbon.security.caas.user.core.constant.UserCoreConstants;
+import org.wso2.carbon.security.caas.user.core.exception.CredentialStoreException;
 import org.wso2.carbon.security.caas.user.core.exception.GroupNotFoundException;
 import org.wso2.carbon.security.caas.user.core.exception.IdentityStoreException;
 import org.wso2.carbon.security.caas.user.core.exception.UserNotFoundException;
 import org.wso2.carbon.security.caas.user.core.store.connector.IdentityStoreConnector;
 import org.wso2.carbon.userstore.ldap.constant.ConnectorConstants;
+import org.wso2.carbon.userstore.ldap.datasource.LDAPConstants;
+import org.wso2.carbon.userstore.ldap.datasource.beans.LDAPConnectionContext;
 
 import javax.naming.*;
 import javax.naming.directory.*;
@@ -40,10 +44,8 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 
 import static org.wso2.carbon.userstore.ldap.constant.ConnectorConstants.USER_SEARCH_BASE;
 
@@ -62,6 +64,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
     private String identityStoreId;
     DataSource dataSource;
     java.util.Properties properties;
+    LDAPConnectionContext connectionSource;
 
 
 
@@ -86,6 +89,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
         this.identityConnectorConfig = identityConnectorConfig;
         this.identityStoreId = identityStoreId;
         properties = identityConnectorConfig.getStoreProperties();
+        LDAPConnectionContext context;
 
         Hashtable env = new Hashtable(11);
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
@@ -146,15 +150,6 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
     public User.UserBuilder getUser(String s) throws UserNotFoundException, IdentityStoreException {
         return null;
     }
-/*
-    @Override
-    public User.UserBuilder getUserFromId(String s) throws IdentityStoreException {
-
-        List <User.UserBuilder> userList=new ArrayList<>();
-
-        return null;
-    }
-    */
 
     public User.UserBuilder getUserFromId(String s, DirContext ctx) throws IdentityStoreException, IOException, NamingException {
 
@@ -265,8 +260,116 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
     }
 
     @Override
-    public Map<String, String> getUserAttributeValues(String s) throws IdentityStoreException {
-        return null;
+    public Map<String, String> getUserAttributeValues(String userName) throws IdentityStoreException {
+
+
+        String userAttributeSeparator = ",";
+        String userDN = null;
+        String[] propertyNames = new String[0];
+
+
+        Map<String, String> values = new HashMap<String, String>();
+        // if user name contains domain name, remove domain name
+        String[] userNames = userName.split(LDAPConstants.DOMAIN_SEPARATOR);
+        if (userNames.length > 1) {
+            userName = userNames[1];
+        }
+
+        DirContext dirContext = null;
+        try {
+            dirContext = connectionSource.getContext();
+        } catch (CredentialStoreException e) {
+            e.printStackTrace();
+        }
+        String  searchFilter = "(&(objectClass=user)(uid =" + userName + ")";;
+
+
+        NamingEnumeration<?> answer = null;
+        NamingEnumeration<?> attrs = null;
+        try {
+            if (userDN != null) {
+                SearchControls searchCtls = new SearchControls();
+                searchCtls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+                if (propertyNames != null && propertyNames.length > 0) {
+                    searchCtls.setReturningAttributes(propertyNames);
+                }
+                if (log.isDebugEnabled()) {
+                    try {
+                        log.debug("Searching for user with SearchFilter: " + searchFilter + " in SearchBase: " + dirContext.getNameInNamespace());
+                    } catch (NamingException e) {
+                        log.debug("Error while getting DN of search base", e);
+                    }
+                    if (propertyNames == null) {
+                        log.debug("No attributes requested");
+                    } else {
+                        for (String attribute : propertyNames) {
+                            log.debug("Requesting attribute :" + attribute);
+                        }
+                    }
+                }
+                try {
+                    answer = dirContext.search(escapeDNForSearch(userDN), searchFilter, searchCtls);
+                } catch (PartialResultException e) {
+                    // can be due to referrals in AD. so just ignore error
+                    String errorMessage = "Error occurred while searching directory context for user : " + userDN + " searchFilter : " + searchFilter;
+
+                } catch (NamingException e) {
+                    String errorMessage = "Error occurred while searching directory context for user : " + userDN + " searchFilter : " + searchFilter;
+                    if (log.isDebugEnabled()) {
+                        log.debug(errorMessage, e);
+                    }
+
+                }
+            } else {
+                answer = this.searchForUser(searchFilter, propertyNames, dirContext);
+            }
+            while (answer.hasMoreElements()) {
+                SearchResult sr = (SearchResult) answer.next();
+                Attributes attributes = sr.getAttributes();
+                if (attributes != null) {
+                    for (String name : propertyNames) {
+                        if (name != null) {
+                            Attribute attribute = attributes.get(name);
+                            if (attribute != null) {
+                                StringBuffer attrBuffer = new StringBuffer();
+                                for (attrs = attribute.getAll(); attrs.hasMore(); ) {
+                                    Object attObject = attrs.next();
+                                    String attr = null;
+                                    if (attObject instanceof String) {
+                                        attr = (String) attObject;
+                                    }
+
+
+                                    String value = attrBuffer.toString();
+
+                                /*
+                                 * Length needs to be more than userAttributeSeparator.length() for a valid
+                                 * attribute, since we
+                                 * attach userAttributeSeparator
+                                 */
+                                    if (value != null && value.trim().length() > userAttributeSeparator.length()) {
+                                        value = value.substring(0, value.length() - userAttributeSeparator.length());
+                                        values.put(name, value);
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        } catch (NamingException e) {
+            String errorMessage = "Error occurred while getting user property values for user : " + userName;
+            if (log.isDebugEnabled()) {
+                log.debug(errorMessage, e);
+            }
+            throw new IdentityStoreException(errorMessage, e);
+        }
+
+        return values;
+
+
     }
 
     @Override
@@ -284,18 +387,19 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
 
         SearchControls controls = new SearchControls();
         controls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        String searchFilter="(objectClass=group)";
+        String searchFilter = "(objectClass=group)";
 
-        NamingEnumeration results=null;
-        results = ctx.search(ConnectorConstants.PROVIDER_PATH,"(objectClass =" + s + ")" , controls);
+        NamingEnumeration results = null;
+        results = ctx.search(ConnectorConstants.PROVIDER_PATH, "(objectClass =" + s + ")", controls);
 
-        while (results.hasMore()){
+        List<Attributes> listGroupByID = null;
+        while (results.hasMore()) {
 
-            SearchResult result=(SearchResult) results.next();
-            Attributes att=result.getAttributes();
+            SearchResult result = (SearchResult) results.next();
+            Attributes att = result.getAttributes();
 
 
-           List<Attributes> listGroupByID = new ArrayList<Attributes>();
+            listGroupByID = new ArrayList<Attributes>();
             listGroupByID.add(att);
         }
 
@@ -454,41 +558,66 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
 
         // Search for groups the user belongs to in order to get their names
         //Create the search controls
-        SearchControls groupsSearchCtls = new SearchControls();
-
-        groupsSearchCtls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-
-        String groupsSearchBase = "DC=adatum,DC=com";
-
-        String groupsReturnedAtts[] = {"sAMAccountName"};
-        groupsSearchCtls.setReturningAttributes(groupsReturnedAtts);
-
-        //Search for objects using the filter
-        NamingEnumeration groupsAnswer = ctx.search(groupsSearchBase, groupsSearchFilter.toString(), groupsSearchCtls);
-
-        //Loop through the search results
-        while (groupsAnswer.hasMoreElements()) {
-
-            SearchResult sr = (SearchResult)groupsAnswer.next();
-            Attributes attrs = sr.getAttributes();
-
-            if (attrs != null) {
-                System.out.println(attrs.get("sAMAccountName").get());
-
-                List<String> AttrList = new ArrayList<String>();
-                AttrList.add((String) attrs.get("sAMAccountName").get());
-
-            }
-        }
 
         return null;
     }
 
+    protected NamingEnumeration<SearchResult> searchForUser(String searchFilter,
+                                                            String[] returnedAtts,
+                                                            DirContext dirContext)
+            throws IdentityStoreException {
+        SearchControls searchCtls = new SearchControls();
+        searchCtls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+        String searchBases = realmConfig.getUserStoreProperty(ConnectorConstants.USER_SEARCH_BASE);
+        if (returnedAtts != null && returnedAtts.length > 0) {
+            searchCtls.setReturningAttributes(returnedAtts);
+        }
+
+        if (log.isDebugEnabled()) {
+            try {
+                log.debug("Searching for user with SearchFilter: " + searchFilter + " in SearchBase: " + dirContext.getNameInNamespace());
+            } catch (NamingException e) {
+                log.debug("Error while getting DN of search base", e);
+            }
+            if (returnedAtts == null) {
+                log.debug("No attributes requested");
+            } else {
+                for (String attribute : returnedAtts) {
+                    log.debug("Requesting attribute :" + attribute);
+                }
+            }
+        }
+
+        String[] searchBaseAraay = searchBases.split("#");
+        NamingEnumeration<SearchResult> answer = null;
+
+        try {
+            for (String searchBase : searchBaseAraay) {
+                answer = dirContext.search(escapeDNForSearch(searchBase), searchFilter, searchCtls);
+                if (answer.hasMore()) {
+                    return answer;
+                }
+            }
+        } catch (PartialResultException e) {
+            // can be due to referrals in AD. so just ignore error
+            String errorMessage ="Error occurred while search user for filter : " + searchFilter;
+
+        } catch (NamingException e) {
+            String errorMessage ="Error occurred while search user for filter : " + searchFilter;
+            if (log.isDebugEnabled()) {
+                log.debug(errorMessage, e);
+            }
+            throw new IdentityStoreException(errorMessage, e);
+        }
+        return answer;
+    }
 
 
     @Override
     public Map<String, String> getGroupAttributeValues(String s, List<String> list) throws IdentityStoreException {
-        return null;
+
+ return null;
+
     }
 
     @Override
@@ -509,14 +638,52 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
 
     @Override
     public boolean isReadOnly() throws IdentityStoreException {
-        return false;
+        return true;
     }
 
     @Override
-    public IdentityConnectorConfig getIdentityStoreConfig() {
-        return null;
+    public IdentityConnectorConfig getIdentityStoreConfig()
+    {
+        return identityConnectorConfig;
+    }
+
+    private int getMaxRowRetrievalCount() {
+
+        int length;
+
+        String maxValue = identityConnectorConfig.getStoreProperties().getProperty(ConnectorConstants.MAX_ROW_LIMIT);
+
+        if (maxValue == null) {
+            length = Integer.MAX_VALUE;
+        } else {
+            length = Integer.parseInt(maxValue);
+        }
+
+        return length;
+    }
+
+
+
+    private String escapeDNForSearch(String dn){
+        boolean replaceEscapeCharacters = true;
+
+        String replaceEscapeCharactersAtUserLoginString = realmConfig
+                .getUserStoreProperty(UserCoreConstants.RealmConfig.PROPERTY_REPLACE_ESCAPE_CHARACTERS_AT_USER_LOGIN);
+
+        if (replaceEscapeCharactersAtUserLoginString != null) {
+            replaceEscapeCharacters = Boolean
+                    .parseBoolean(replaceEscapeCharactersAtUserLoginString);
+            if (log.isDebugEnabled()) {
+                log.debug("Replace escape characters configured to: "
+                        + replaceEscapeCharactersAtUserLoginString);
+            }
+        }
+        if (replaceEscapeCharacters) {
+            return dn.replace("\\\\", "\\\\\\").replace("\\\"", "\\\\\"");
+        } else {
+            return dn;
+        }
     }
 }
-
 
 
