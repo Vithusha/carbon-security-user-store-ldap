@@ -18,6 +18,7 @@ package org.wso2.carbon.userstore.ldap.connector.factory;
 
 import org.wso2.carbon.security.caas.user.core.store.connector.CredentialStoreConnector;
 import org.wso2.carbon.security.caas.user.core.store.connector.CredentialStoreConnectorFactory;
+import org.wso2.carbon.userstore.ldap.connector.LDAPCredentialStoreConnector;
 
 /**
  * LDAP based implementation for credential store connector factory.
@@ -26,6 +27,6 @@ public class LDAPCredentialStoreConnectorFactory implements CredentialStoreConne
 
     @Override
     public CredentialStoreConnector getInstance() {
-        return null;
+        return new LDAPCredentialStoreConnector();
     }
 }

@@ -14,15 +14,66 @@
     <name>WSO2 Carbon Security User Store LDAP</name>
     <url>http://maven.apache.org</url>
 
+
+
     <dependencies>
         <dependency>
             <groupId>org.wso2.carbon.security.caas</groupId>
             <artifactId>org.wso2.carbon.security.caas</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wso2.carbon.jndi</groupId>
+            <artifactId>org.wso2.carbon.jndi</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.wso2.carbon.datasources</groupId>
             <artifactId>org.wso2.carbon.datasource.core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
     </dependencies>
 
-</project>
+    <properties>
+        <private.package>org.wso2.carbon.security.userstore.ldap.internal</private.package>
+        <export.package>
+            !org.wso2.carbon.security.userstore.ldap.internal,
+            org.wso2.carbon.security.userstore.ldap.*
+        </export.package>
+        <import.package>
+            org.osgi.framework.*;version="${osgi.framework.package.import.version.range}",
+            org.osgi.service.permissionadmin.*;version="${org.osgi.service.permissionadmin.import.version.range}",
+            org.slf4j.*;version="${slf4j.logging.package.import.version.range}",
+            javax.security.auth.*,
+            javax.sql.*,
+            javax.naming.*,
+            javax.xml.*,
+            javax.crypto.*,
+            org.osgi.service.component.annotations.*;version="${org.osgi.service.component.annotations.version.range}",
+            org.osgi.service.jndi.*;version="${org.osgi.service.jndi.version.range}",
+            org.wso2.carbon.datasource.core.*;version="${org.wso2.carbon.datasource.version.range}",
+            org.wso2.carbon.security.*;version="${org.wso2.carbon.security.version.range}"
+        </import.package>
+
+        <carbon.component>
+            osgi.service;
+            objectClass="org.wso2.carbon.security.caas.user.core.store.connector.CredentialStoreConnectorFactory",
+            osgi.service;
+            objectClass="org.wso2.carbon.security.caas.user.core.store.connector.IdentityStoreConnectorFactory"
+        </carbon.component>
+
+        <osgi.framework.package.import.version.range>[1.8.0, 2.0.0)</osgi.framework.package.import.version.range>
+        <org.osgi.service.permissionadmin.import.version.range>[1.2.0, 1.3.0)
+        </org.osgi.service.permissionadmin.import.version.range>
+        <org.osgi.service.component.annotations.version.range>[1.2.0, 1.3.0)
+        </org.osgi.service.component.annotations.version.range>
+        <org.osgi.service.jndi.version.range>[1.0.0, 1.1.0)</org.osgi.service.jndi.version.range>
+        <org.wso2.carbon.datasource.version.range>[1.0.0, 1.1.0)</org.wso2.carbon.datasource.version.range>
+        <org.wso2.carbon.security.version.range>[1.0.0, 1.1.0)</org.wso2.carbon.security.version.range>
+    </properties>
+
+
+
+ </project>
+

@@ -21,7 +21,6 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.wso2.carbon.datasource.core.exception.DataSourceException;
 import org.wso2.carbon.datasource.core.spi.DataSourceReader;
-import org.wso2.carbon.userstore.ldap.datasource.beans.LDAPDataSource;
 import org.wso2.carbon.userstore.ldap.datasource.utils.LDAPDataSourceUtils;
 
 /**
