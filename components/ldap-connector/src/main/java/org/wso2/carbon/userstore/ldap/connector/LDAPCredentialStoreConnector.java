@@ -17,8 +17,7 @@
 package org.wso2.carbon.userstore.ldap.connector;
 
 import org.wso2.carbon.security.caas.user.core.bean.User;
-import org.wso2.carbon.security.caas.user.core.config.CredentialConnectorConfig;
-//import org.wso2.carbon.security.caas.user.core.config.CredentialStoreConfig;
+import org.wso2.carbon.security.caas.user.core.config.CredentialStoreConfig;
 import org.wso2.carbon.security.caas.user.core.exception.AuthenticationFailure;
 import org.wso2.carbon.security.caas.user.core.exception.CredentialStoreException;
 import org.wso2.carbon.security.caas.user.core.store.connector.CredentialStoreConnector;
@@ -30,17 +29,8 @@ import javax.security.auth.callback.Callback;
  */
 public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
 
-    /*
     @Override
     public void init(String s, CredentialStoreConfig credentialStoreConfig) throws CredentialStoreException {
-    }
-    */
-
-    @Override
-    public void init(String s, CredentialConnectorConfig credentialConnectorConfig) throws CredentialStoreException {
-
-
-
     }
 
     @Override
@@ -59,7 +49,7 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
     }
 
     @Override
-    public CredentialConnectorConfig getCredentialStoreConfig() {
+    public CredentialStoreConfig getCredentialStoreConfig() {
         return null;
     }
 }

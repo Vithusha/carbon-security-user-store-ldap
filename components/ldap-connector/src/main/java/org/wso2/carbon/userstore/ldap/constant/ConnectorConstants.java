@@ -20,9 +20,4 @@ package org.wso2.carbon.userstore.ldap.constant;
  * Constants related to the ldap connector.
  */
 public class ConnectorConstants {
-
-    public static final String USER_SEARCH_BASE = "UserSearchBase";
-    public static final String GROUP_SEARCH_BASE = "GroupSearchBase";
-    public static final String USER_NAME_LIST_FILTER = "UserNameListFilter";
-    public static final String PROVIDER_PATH="dc=wso2,dc=com";
 }
