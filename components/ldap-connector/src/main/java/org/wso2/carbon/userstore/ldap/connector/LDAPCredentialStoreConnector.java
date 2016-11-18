@@ -18,15 +18,15 @@ package org.wso2.carbon.userstore.ldap.connector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.gateway.internal.common.CarbonCallback;
+import org.wso2.carbon.identity.mgt.IdentityCallback;
 import org.wso2.carbon.identity.mgt.config.CredentialStoreConnectorConfig;
+import org.wso2.carbon.identity.mgt.constant.UserCoreConstants;
 import org.wso2.carbon.identity.mgt.exception.AuthenticationFailure;
 import org.wso2.carbon.identity.mgt.exception.CredentialStoreException;
-import org.wso2.carbon.identity.mgt.exception.IdentityStoreException;
 import org.wso2.carbon.identity.mgt.store.connector.CredentialStoreConnector;
 import org.wso2.carbon.userstore.ldap.datasource.utils.LDAPConnectionContext;
-import org.wso2.carbon.userstore.ldap.datasource.utils.LDAPStoreConfig;
 
+import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.PasswordCallback;
@@ -56,15 +56,16 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
     @Override
     public void init(CredentialStoreConnectorConfig credentialStoreConnectorConfig) throws CredentialStoreException {
 
-        this.credentialConnectorConfig=credentialStoreConnectorConfig;
-        this.properties=credentialConnectorConfig.getProperties();
+        this.credentialConnectorConfig = credentialStoreConnectorConfig;
+        this.properties = credentialConnectorConfig.getProperties();
+        this.credentialStoreId = credentialStoreConnectorConfig.getConnectorId();
         // check if required configurations are in the user-mgt.xml
 
-        try {
+      /*  try {
             new LDAPStoreConfig().checkRequiredUserStoreConfigurations();
         } catch (IdentityStoreException e) {
 
-        }
+        }*/
 
 
         if (log.isDebugEnabled()) {
@@ -75,7 +76,7 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
 
     @Override
     public String getCredentialStoreConnectorId() {
-        this.credentialStoreId=properties.getProperty(credentialStoreId);
+
         return credentialStoreId;
     }
 
@@ -83,12 +84,14 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
     public void authenticate(Callback[] callbacks) throws CredentialStoreException, AuthenticationFailure {
         Map<String, String> userData = null;
         char[] password = null;
+        String userId;
+        String passWord;
 
         for (Callback callback : callbacks) {
             if (callback instanceof PasswordCallback) {
                 password = ((PasswordCallback) callback).getPassword();
-            } else if (callback instanceof CarbonCallback) {
-                userData = (Map<String, String>) ((CarbonCallback) callback);
+            } else if (callback instanceof IdentityCallback) {
+                userData = (Map<String, String>) ((IdentityCallback) callback).getContent();
             }
         }
 
@@ -96,6 +99,15 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
             throw new AuthenticationFailure("Data required for authentication is missing.");
         }
 
+        userId= userData.get(UserCoreConstants.USER_ID);
+        passWord = new String(password);
+
+        try {
+           connectionSource.getContextWithCredentials(userId, passWord);
+
+        } catch (NamingException e) {
+            throw  new CredentialStoreException("Invalid username or password" + e);
+        }
 
 
     }
@@ -107,11 +119,11 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
 
         for (Callback callback : callbacks) {
 
-            if(callback instanceof CarbonCallback){
-                carbonCallbackPresent=true;
+            if (callback instanceof IdentityCallback) {
+                carbonCallbackPresent = true;
             }
-            if(callback instanceof  PasswordCallback){
-                passwordCallbackPresent=true;
+            if (callback instanceof  PasswordCallback) {
+                passwordCallbackPresent = true;
             }
 
         }
@@ -138,7 +150,7 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
     }
 
     @Override
-    public void addCredential(Callback[] callbacks) throws CredentialStoreException {
+    public String addCredential(Callback[] callbacks) throws CredentialStoreException {
         throw new CredentialStoreException(
                 "User store is operating in read only mode. Cannot write into the user store.");
     }

@@ -16,7 +16,7 @@ public class LDAPStoreConfig {
     private static Logger log = LoggerFactory.getLogger(LDAPStoreConfig.class);
     Properties properties;
 
-    public void checkRequiredUserStoreConfigurations() throws IdentityStoreException,CredentialStoreException {
+    public void checkRequiredUserStoreConfigurations() throws IdentityStoreException, CredentialStoreException {
 
         log.debug("Checking LDAP configurations ");
         String connectionURL = properties.getProperty(LDAPConstants.CONNECTION_URL);
@@ -87,4 +87,5 @@ public class LDAPStoreConfig {
         }
 
     }
+
 }

@@ -50,7 +50,7 @@ storeConnectors:
  authorizationStoreConnectors:
   -
     connectorId: "LDAPAS1"
-    connectorType: "LDAPAuthorizationStore"
+    connectorType: "JDBCAuthorizationStore"
     properties:
       dataSource: "WSO2_CARBON_DB"
       databaseType: "MySQL"

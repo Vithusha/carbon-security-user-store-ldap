@@ -14,13 +14,7 @@
     <name>WSO2 Carbon Security User Store LDAP</name>
     <url>http://maven.apache.org</url>
 
-
-
     <dependencies>
-        <!--<dependency>-->
-            <!--<groupId>org.wso2.carbon.security.caas</groupId>-->
-            <!--<artifactId>org.wso2.carbon.security.caas</artifactId>-->
-        <!--</dependency>-->
         <dependency>
             <groupId>org.wso2.carbon.jndi</groupId>
             <artifactId>org.wso2.carbon.jndi</artifactId>
@@ -38,51 +32,34 @@
             <artifactId>org.wso2.carbon.identity.mgt</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.jboss.aerogear</groupId>
-            <artifactId>aerogear-security</artifactId>
-            <version>1.3.1</version>
+            <groupId>org.wso2.carbon</groupId>
+            <artifactId>org.wso2.carbon.core</artifactId>
         </dependency>
         <dependency>
-            <groupId>cas</groupId>
-            <artifactId>cas</artifactId>
-            <version>2.0.12</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging-api</artifactId>
-            <version>1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.gateway</groupId>
-            <artifactId>org.wso2.carbon.gateway</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.example</groupId>
-            <artifactId>circuitbreaker</artifactId>
-            <version>2.0.0-SNAPSHOT</version>
+            <groupId>org.ops4j.pax.logging</groupId>
+            <artifactId>pax-logging-api</artifactId>
         </dependency>
 
     </dependencies>
 
     <properties>
-        <private.package>org.wso2.carbon.security.userstore.ldap.internal</private.package>
+        <private.package>org.wso2.carbon.userstore.ldap.internal</private.package>
         <export.package>
-            !org.wso2.carbon.security.userstore.ldap.internal,
-            org.wso2.carbon.security.userstore.ldap.*
+            !org.wso2.carbon.userstore.ldap.internal,
+            org.wso2.carbon.userstore.ldap.*
         </export.package>
         <import.package>
             org.osgi.framework.*;version="${osgi.framework.package.import.version.range}",
             org.osgi.service.permissionadmin.*;version="${org.osgi.service.permissionadmin.import.version.range}",
             org.slf4j.*;version="${slf4j.logging.package.import.version.range}",
             javax.security.auth.*,
-            javax.sql.*,
             javax.naming.*,
             javax.xml.*,
             javax.crypto.*,
             org.osgi.service.component.annotations.*;version="${org.osgi.service.component.annotations.version.range}",
             org.osgi.service.jndi.*;version="${org.osgi.service.jndi.version.range}",
             org.wso2.carbon.datasource.core.*;version="${org.wso2.carbon.datasource.version.range}",
+            org.wso2.carbon.kernel.*,
             org.wso2.carbon.identity.mgt.*;version="${org.wso2.carbon.identity.mgt.range}",
         </import.package>
 
@@ -93,15 +70,7 @@
             objectClass="org.wso2.carbon.identity.mgt.store.connector.IdentityStoreConnectorFactory"
         </carbon.component>
 
-        <osgi.framework.package.import.version.range>[1.8.0, 2.0.0)</osgi.framework.package.import.version.range>
-        <org.osgi.service.permissionadmin.import.version.range>[1.2.0, 1.3.0)</org.osgi.service.permissionadmin.import.version.range>
-        <org.osgi.service.component.annotations.version.range>[1.2.0, 1.3.0) </org.osgi.service.component.annotations.version.range>
-        <org.osgi.service.jndi.version.range>[1.0.0, 1.1.0)</org.osgi.service.jndi.version.range>
-        <org.wso2.carbon.datasource.version.range>[1.0.0, 1.1.0)</org.wso2.carbon.datasource.version.range>
-        <!--<org.wso2.carbon.security.version.range>[1.0.0, 1.1.0)</org.wso2.carbon.security.version.range>-->
-        <org.wso2.carbon.identity.mgt.range>[1.0.0, 1.1.0)</org.wso2.carbon.identity.mgt.range>
 
-        <slf4j.logging.package.import.version.range>[1.7.1, 2.0.0)</slf4j.logging.package.import.version.range>
     </properties>
 
 

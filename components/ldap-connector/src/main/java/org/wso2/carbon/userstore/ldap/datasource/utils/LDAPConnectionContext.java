@@ -20,8 +20,8 @@
 
 package org.wso2.carbon.userstore.ldap.datasource.utils;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.carbon.datasource.core.exception.DataSourceException;
 import org.wso2.carbon.identity.mgt.exception.CredentialStoreException;
 import org.wso2.carbon.userstore.ldap.datasource.LDAPConstants;
@@ -33,6 +33,7 @@ import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -41,16 +42,14 @@ import java.util.Properties;
 
  public class LDAPConnectionContext {
 
-        private static Log log = (Log) LogFactory.getLog(LDAPConnectionContext.class);
+        private static Logger log = LoggerFactory.getLogger(LDAPConnectionContext.class);
         @SuppressWarnings("rawtypes")
         private Hashtable<String, String> environment;
         private static final String CONNECTION_TIME_OUT = "LDAPConnectionTimeout";
         private static final String READ_TIME_OUT = "ReadTimeout";
 
 
-    public LDAPConnectionContext(){
 
-    }
 
         @SuppressWarnings({"rawtypes", "unchecked"})
         public LDAPConnectionContext(Properties properties) throws DataSourceException {
@@ -96,13 +95,13 @@ import java.util.Properties;
             }
             //Set connect timeout if provided in configuration. Otherwise set default value
 
-            String connectTimeout =properties.getProperty(CONNECTION_TIME_OUT);
+            String connectTimeout = properties.getProperty(CONNECTION_TIME_OUT);
             String readTimeout = properties.getProperty(READ_TIME_OUT);
             if (connectTimeout != null && !connectTimeout.trim().isEmpty()) {
                 environment.put("com.sun.jndi.ldap.connect.timeout", connectTimeout);
             } else {
                 environment.put("com.sun.jndi.ldap.connect.timeout", "5000");
-                environment.put("com.sun.jndi.ldap.connect.isLDAPConnectionPoolingEnabled","true");
+                environment.put("com.sun.jndi.ldap.connect.isLDAPConnectionPoolingEnabled", "true");
 
             }
 
@@ -128,17 +127,16 @@ import java.util.Properties;
             }
             return (context);
         }
-//TODO: Naming Exception to be caught, Access Modifier
+        //TODO: Naming Exception to be caught, Access Modifier
 
         public LdapContext getContextWithCredentials(String userDN, String password)
-                throws CredentialStoreException, NamingException
-        {
+                throws CredentialStoreException, NamingException {
             LdapContext context;
 
             //create a temp env for this particular authentication session by copying the original env
             Hashtable<String, String> tempEnv = new Hashtable<>();
-            for (Object key : environment.keySet()) {
-                tempEnv.put((String) key, environment.get(key));
+            for (Map.Entry entry : environment.entrySet()) {
+                tempEnv.put((String) entry.getKey(), (String) entry.getValue());
             }
             //replace connection name and password with the passed credentials to this method
             tempEnv.put(Context.SECURITY_PRINCIPAL, userDN);

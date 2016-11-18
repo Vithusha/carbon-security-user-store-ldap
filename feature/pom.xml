@@ -9,9 +9,117 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>org.wso2.carbon.userstore.ldap.feature</artifactId>
-    <packaging>bundle</packaging>
+    <packaging>carbon-feature</packaging>
 
     <name>WSO2 Carbon Security User Store LDAP - Feature</name>
     <url>http://maven.apache.org</url>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.wso2.carbon.security.userstore</groupId>
+            <artifactId>org.wso2.carbon.userstore.ldap</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.jndi</groupId>
+            <artifactId>org.wso2.carbon.jndi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.datasources</groupId>
+            <artifactId>org.wso2.carbon.datasource.core</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>prefilter-resources</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>src/main/resources</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>resources</directory>
+                                    <includes>
+                                        <include>conf/identity/ldap-identity-connector.yml</include>
+                                        <include>conf/identity/ldap-credential-connector.yml</include>
+                                        <include>p2.inf</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.wso2.carbon.maven</groupId>
+                <artifactId>carbon-feature-plugin</artifactId>
+                <version>${carbon.feature.plugin.version}</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <id>1-p2-feature-generation</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+
+                            <propertyFile>etc/feature.properties</propertyFile>
+                            <adviceFileContents>
+                                <advice>
+                                    <name>org.wso2.carbon.p2.category.type</name>
+                                    <value>server</value>
+                                </advice>
+                                <advice>
+                                    <name>org.eclipse.equinox.p2.type.group</name>
+                                    <value>false</value>
+                                </advice>
+                            </adviceFileContents>
+                            <bundles>
+                                <bundle>
+                                    <symbolicName>org.wso2.carbon.userstore.ldap</symbolicName>
+                                    <version>${carbon.security.userstore.ldap.version}</version>
+                                </bundle>
+                            </bundles>
+                            <importFeatures>
+                                <feature>
+                                    <id>org.wso2.carbon.jndi.feature</id>
+                                    <version>${carbon.jndi.version}</version>
+                                </feature>
+                                <feature>
+                                    <id>org.wso2.carbon.datasource.core.feature</id>
+                                    <version>${carbon.datasources.version}</version>
+                                </feature>
+                            </importFeatures>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>clean_target</id>
+                        <phase>install</phase>
+                        <configuration>
+                            <target>
+                                <delete dir="src/main/resources"/>
+                                <delete dir="src/main"/>
+                                <delete dir="src"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

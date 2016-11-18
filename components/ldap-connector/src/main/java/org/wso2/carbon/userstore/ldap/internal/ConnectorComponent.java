@@ -19,7 +19,11 @@ package org.wso2.carbon.userstore.ldap.internal;
 
 
 import org.osgi.framework.BundleContext;
-import org.osgi.service.component.annotations.*;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.carbon.datasource.core.api.DataSourceService;
@@ -56,13 +60,13 @@ public class ConnectorComponent {
         Dictionary<String, String> connectorProperties = new Hashtable<>();
 
         connectorProperties.put("connector-type", "LDAPIdentityStore");
-        bundleContext.registerService(String.valueOf(IdentityStoreConnectorFactory.class), new LDAPIdentityStoreConnectorFactory(),
+        bundleContext.registerService(IdentityStoreConnectorFactory.class, new LDAPIdentityStoreConnectorFactory(),
                 connectorProperties);
 
 
         connectorProperties = new Hashtable<>();
         connectorProperties.put("connector-type", "LDAPCredentialStore");
-        bundleContext.registerService(String.valueOf(CredentialStoreConnectorFactory.class), new LDAPCredentialStoreConnectorFactory(),
+        bundleContext.registerService(CredentialStoreConnectorFactory.class, new LDAPCredentialStoreConnectorFactory(),
                 connectorProperties);
 
         log.info("LDAP user store bundle successfully activated.");
@@ -71,7 +75,7 @@ public class ConnectorComponent {
     @Reference(
             name = "org.wso2.carbon.datasource.DataSourceService",
             service = DataSourceService.class,
-            cardinality = ReferenceCardinality.AT_LEAST_ONE,
+            cardinality = ReferenceCardinality.OPTIONAL,
             policy = ReferencePolicy.DYNAMIC,
             unbind = "unregisterDataSourceService"
     )

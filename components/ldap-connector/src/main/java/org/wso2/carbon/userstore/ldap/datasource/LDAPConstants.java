@@ -46,7 +46,7 @@ public class LDAPConstants {
     public static final String GROUP_NAME_LIST_FILTER = "GroupNameListFilter";
     public static final String GROUP_NAME_ATTRIBUTE = "GroupNameAttribute";
     public static final String MEMBERSHIP_ATTRIBUTE = "MembershipAttribute";
-    public static final String ATTRIBUTE_NAMES="AttributeNames";
+    public static final String ATTRIBUTE_NAMES = "AttributeNames";
 
 
     //AuthenticationConstants

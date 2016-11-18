@@ -9,6 +9,7 @@ import org.wso2.carbon.identity.mgt.bean.Group;
 import org.wso2.carbon.identity.mgt.bean.User;
 import org.wso2.carbon.identity.mgt.config.IdentityStoreConnectorConfig;
 import org.wso2.carbon.identity.mgt.exception.GroupNotFoundException;
+import org.wso2.carbon.identity.mgt.exception.IdentityStoreConnectorException;
 import org.wso2.carbon.identity.mgt.exception.IdentityStoreException;
 import org.wso2.carbon.identity.mgt.exception.UserNotFoundException;
 import org.wso2.carbon.identity.mgt.store.connector.IdentityStoreConnector;
@@ -57,7 +58,7 @@ public class LDAPIdentityConnectorTests {
     }
 
     @Test(priority = 2)
-    public void testAddUser() throws IdentityStoreException {
+    public void testAddUser() throws IdentityStoreException, IdentityStoreConnectorException {
 
         //As beforeClass is not supported, connector is initialized here
         initConnector();

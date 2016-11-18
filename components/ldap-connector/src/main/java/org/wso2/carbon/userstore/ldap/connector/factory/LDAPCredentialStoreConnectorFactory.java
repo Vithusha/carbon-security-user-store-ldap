@@ -16,8 +16,8 @@
 
 package org.wso2.carbon.userstore.ldap.connector.factory;
 
-import org.wso2.carbon.security.caas.user.core.store.connector.CredentialStoreConnector;
-import org.wso2.carbon.security.caas.user.core.store.connector.CredentialStoreConnectorFactory;
+import org.wso2.carbon.identity.mgt.store.connector.CredentialStoreConnector;
+import org.wso2.carbon.identity.mgt.store.connector.CredentialStoreConnectorFactory;
 import org.wso2.carbon.userstore.ldap.connector.LDAPCredentialStoreConnector;
 
 /**

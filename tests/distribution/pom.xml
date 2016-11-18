@@ -78,8 +78,7 @@
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.security.userstore</groupId>
-            <artifactId>org.wso2.carbon.security.userstore.ldap.parent</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <artifactId>org.wso2.carbon.userstore.ldap.feature</artifactId>
             <type>zip</type>
         </dependency>
         <dependency>
@@ -90,6 +89,12 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.security.userstore</groupId>
+            <artifactId>org.wso2.carbon.security.userstore.jdbc.feature</artifactId>
+            <type>zip</type>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -151,8 +156,8 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>org.wso2.carbon.security.userstore</groupId>
-                                    <artifactId>org.wso2.carbon.security.userstore.ldap.feature</artifactId>
-                                    <version>${carbon.security.userstore.jdbc.version}</version>
+                                    <artifactId>org.wso2.carbon.security.userstore.jdbc.feature</artifactId>
+                                    <version>1.0.0-SNAPSHOT</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>
@@ -204,12 +209,16 @@
                                     <version>${carbon.datasources.version}</version>
                                 </feature>
                                <feature>
+                                    <id>org.wso2.carbon.userstore.ldap.feature</id>
+                                    <version>${carbon.security.userstore.ldap.version}</version>
+                                </feature>
+                                <feature>
                                     <id>org.wso2.carbon.security.userstore.jdbc.feature</id>
-                                    <version>${carbon.security.userstore.jdbc.version}</version>
+                                    <version>1.0.0-SNAPSHOT</version>
                                 </feature>
                                 <feature>
                                     <id>org.wso2.carbon.identity.mgt.feature</id>
-                                    <version>1.0.0-SNAPSHOT</version>
+                                    <version>${org.wso2.carbon.identity.mgt.feature.version}</version>
                                 </feature>
                             </features>
                         </configuration>
@@ -289,12 +298,16 @@
                                     <version>${carbon.datasources.version}</version>
                                 </feature>
                                 <feature>
+                                    <id>org.wso2.carbon.userstore.ldap.feature</id>
+                                    <version>${carbon.security.userstore.ldap.version}</version>
+                                </feature>
+                                <feature>
                                     <id>org.wso2.carbon.security.userstore.jdbc.feature</id>
-                                    <version>${carbon.security.userstore.jdbc.version}</version>
+                                    <version>1.0.0-SNAPSHOT</version>
                                 </feature>
                                 <feature>
                                     <id>org.wso2.carbon.identity.mgt.feature</id>
-                                    <version>1.0.0-SNAPSHOT</version>
+                                    <version>${org.wso2.carbon.identity.mgt.feature.version}</version>
                                 </feature>
                             </features>
                         </configuration>
