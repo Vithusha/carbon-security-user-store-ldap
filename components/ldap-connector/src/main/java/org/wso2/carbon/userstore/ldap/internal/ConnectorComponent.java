@@ -23,10 +23,10 @@ import org.osgi.service.component.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.carbon.datasource.core.api.DataSourceService;
-import org.wso2.carbon.security.caas.user.core.constant.UserCoreConstants;
-import org.wso2.carbon.security.caas.user.core.store.connector.CredentialStoreConnectorFactory;
-import org.wso2.carbon.security.caas.user.core.store.connector.IdentityStoreConnectorFactory;
-import org.wso2.carbon.security.caas.user.core.util.PasswordHandler;
+import org.wso2.carbon.identity.mgt.constant.UserCoreConstants;
+import org.wso2.carbon.identity.mgt.store.connector.CredentialStoreConnectorFactory;
+import org.wso2.carbon.identity.mgt.store.connector.IdentityStoreConnectorFactory;
+import org.wso2.carbon.identity.mgt.util.PasswordHandler;
 import org.wso2.carbon.userstore.ldap.connector.factory.LDAPCredentialStoreConnectorFactory;
 import org.wso2.carbon.userstore.ldap.connector.factory.LDAPIdentityStoreConnectorFactory;
 import org.wso2.carbon.userstore.ldap.datasource.utils.DatabaseUtil;
@@ -56,13 +56,13 @@ public class ConnectorComponent {
         Dictionary<String, String> connectorProperties = new Hashtable<>();
 
         connectorProperties.put("connector-type", "LDAPIdentityStore");
-        bundleContext.registerService(IdentityStoreConnectorFactory.class, new LDAPIdentityStoreConnectorFactory(),
+        bundleContext.registerService(String.valueOf(IdentityStoreConnectorFactory.class), new LDAPIdentityStoreConnectorFactory(),
                 connectorProperties);
 
 
         connectorProperties = new Hashtable<>();
         connectorProperties.put("connector-type", "LDAPCredentialStore");
-        bundleContext.registerService(CredentialStoreConnectorFactory.class, new LDAPCredentialStoreConnectorFactory(),
+        bundleContext.registerService(String.valueOf(CredentialStoreConnectorFactory.class), new LDAPCredentialStoreConnectorFactory(),
                 connectorProperties);
 
         log.info("LDAP user store bundle successfully activated.");

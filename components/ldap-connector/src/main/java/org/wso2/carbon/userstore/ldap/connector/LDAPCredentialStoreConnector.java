@@ -18,12 +18,12 @@ package org.wso2.carbon.userstore.ldap.connector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.security.caas.api.CarbonCallback;
-import org.wso2.carbon.security.caas.user.core.config.CredentialStoreConnectorConfig;
-import org.wso2.carbon.security.caas.user.core.exception.AuthenticationFailure;
-import org.wso2.carbon.security.caas.user.core.exception.CredentialStoreException;
-import org.wso2.carbon.security.caas.user.core.exception.IdentityStoreException;
-import org.wso2.carbon.security.caas.user.core.store.connector.CredentialStoreConnector;
+import org.wso2.carbon.gateway.internal.common.CarbonCallback;
+import org.wso2.carbon.identity.mgt.config.CredentialStoreConnectorConfig;
+import org.wso2.carbon.identity.mgt.exception.AuthenticationFailure;
+import org.wso2.carbon.identity.mgt.exception.CredentialStoreException;
+import org.wso2.carbon.identity.mgt.exception.IdentityStoreException;
+import org.wso2.carbon.identity.mgt.store.connector.CredentialStoreConnector;
 import org.wso2.carbon.userstore.ldap.datasource.utils.LDAPConnectionContext;
 import org.wso2.carbon.userstore.ldap.datasource.utils.LDAPStoreConfig;
 
@@ -88,7 +88,7 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
             if (callback instanceof PasswordCallback) {
                 password = ((PasswordCallback) callback).getPassword();
             } else if (callback instanceof CarbonCallback) {
-                userData = (Map<String, String>) ((CarbonCallback) callback).getContent();
+                userData = (Map<String, String>) ((CarbonCallback) callback);
             }
         }
 
@@ -125,6 +125,35 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
         return credentialConnectorConfig;
     }
 
+    @Override
+    public void updateCredential(Callback[] callbacks) throws CredentialStoreException {
+        throw new CredentialStoreException(
+                "User store is operating in read only mode. Cannot write into the user store.");
+    }
+
+    @Override
+    public void updateCredential(String s, Callback[] callbacks) throws CredentialStoreException {
+        throw new CredentialStoreException(
+                "User store is operating in read only mode. Cannot write into the user store.");
+    }
+
+    @Override
+    public void addCredential(Callback[] callbacks) throws CredentialStoreException {
+        throw new CredentialStoreException(
+                "User store is operating in read only mode. Cannot write into the user store.");
+    }
+
+    @Override
+    public void addCredential(String s, Callback[] callbacks) throws CredentialStoreException {
+        throw new CredentialStoreException(
+                "User store is operating in read only mode. Cannot write into the user store.");
+    }
+
+    @Override
+    public void deleteCredential(String s) throws CredentialStoreException {
+        throw new CredentialStoreException(
+                "User store is operating in read only mode. Cannot write into the user store.");
+    }
 
 
 }

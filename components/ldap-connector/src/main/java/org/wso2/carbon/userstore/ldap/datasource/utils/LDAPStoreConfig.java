@@ -2,8 +2,8 @@ package org.wso2.carbon.userstore.ldap.datasource.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.carbon.security.caas.user.core.exception.CredentialStoreException;
-import org.wso2.carbon.security.caas.user.core.exception.IdentityStoreException;
+import org.wso2.carbon.identity.mgt.exception.CredentialStoreException;
+import org.wso2.carbon.identity.mgt.exception.IdentityStoreException;
 import org.wso2.carbon.userstore.ldap.datasource.LDAPConstants;
 
 import java.util.Properties;
@@ -16,7 +16,7 @@ public class LDAPStoreConfig {
     private static Logger log = LoggerFactory.getLogger(LDAPStoreConfig.class);
     Properties properties;
 
-    public void checkRequiredUserStoreConfigurations() throws IdentityStoreException,CredentialStoreException{
+    public void checkRequiredUserStoreConfigurations() throws IdentityStoreException,CredentialStoreException {
 
         log.debug("Checking LDAP configurations ");
         String connectionURL = properties.getProperty(LDAPConstants.CONNECTION_URL);

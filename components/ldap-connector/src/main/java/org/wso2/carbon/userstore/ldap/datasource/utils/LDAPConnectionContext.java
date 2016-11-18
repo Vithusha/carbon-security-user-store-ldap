@@ -23,7 +23,7 @@ package org.wso2.carbon.userstore.ldap.datasource.utils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.datasource.core.exception.DataSourceException;
-import org.wso2.carbon.security.caas.user.core.exception.CredentialStoreException;
+import org.wso2.carbon.identity.mgt.exception.CredentialStoreException;
 import org.wso2.carbon.userstore.ldap.datasource.LDAPConstants;
 
 import javax.naming.Context;

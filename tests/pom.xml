@@ -9,9 +9,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>org.wso2.carbon.userstore.ldap.test</artifactId>
-    <packaging>bundle</packaging>
+    <packaging>pom</packaging>
 
     <name>WSO2 Carbon Security User Store LDAP - Tests</name>
     <url>http://maven.apache.org</url>
+
+    <modules>
+        <module>distribution</module>
+        <module>osgi-tests</module>
+    </modules>
 
 </project>

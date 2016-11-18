@@ -22,16 +22,20 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
+        <module name="org.wso2.carbon.security.userstore.jdbc.test.osgi" />
+        <module name="org.wso2.carbon.security.userstore.ldap.test.osgi" />
         <module name="org.wso2.carbon.userstore.ldap" />
         <module name="org.wso2.carbon.userstore.ldap.feature" />
-        <module name="org.wso2.carbon.userstore.ldap.test" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="org.wso2.carbon.security.userstore.jdbc.test.osgi" target="1.5" />
       <module name="org.wso2.carbon.security.userstore.ldap.parent" target="1.8" />
+      <module name="org.wso2.carbon.security.userstore.ldap.test.osgi" target="1.8" />
+      <module name="org.wso2.carbon.security.userstore.test.distribution" target="1.8" />
       <module name="org.wso2.carbon.userstore.ldap" target="1.8" />
-      <module name="org.wso2.carbon.userstore.ldap.feature" target="1.5" />
-      <module name="org.wso2.carbon.userstore.ldap.test" target="1.5" />
+      <module name="org.wso2.carbon.userstore.ldap.feature" target="1.8" />
+      <module name="org.wso2.carbon.userstore.ldap.test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
