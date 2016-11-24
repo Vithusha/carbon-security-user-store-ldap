@@ -63,8 +63,8 @@ import java.util.Properties;
             }
 
             environment = new Hashtable<>();
-            environment.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-            environment.put(Context.SECURITY_AUTHENTICATION, "simple");
+            environment.put(Context.INITIAL_CONTEXT_FACTORY, LDAPConstants.LDAP_CONTEXT_FACTORY);
+            environment.put(Context.SECURITY_AUTHENTICATION, LDAPConstants.AUTHENTICATION_TYPE);
 
             if (connectionName != null) {
                 environment.put(Context.SECURITY_PRINCIPAL, connectionName);

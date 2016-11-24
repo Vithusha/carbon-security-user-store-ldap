@@ -63,6 +63,8 @@
             org.wso2.carbon.identity.mgt.*;version="${org.wso2.carbon.identity.mgt.range}",
         </import.package>
 
+        <DynamicImport-Package>*</DynamicImport-Package>
+
         <carbon.component>
             osgi.service;
             objectClass="org.wso2.carbon.identity.mgt.store.connector.CredentialStoreConnectorFactory",

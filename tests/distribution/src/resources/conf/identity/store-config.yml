@@ -32,9 +32,9 @@ storeConnectors:
       - firstName
       - lastName
     properties:
-      dataSource: "WSO2_CARBON_DB"
-      hashAlgorithm: "SHA256"
-      databaseType: "MySQL"
+      connectionURL:  "ldap://localhost:389/dc=wso2,dc=com"
+      securityPrincipal: "cn=admin,dc=wso2,dc=com"
+      connectionPassword: "admin"
       connectorGroupId: "groupname"
       connectorUs erId: "username"
 

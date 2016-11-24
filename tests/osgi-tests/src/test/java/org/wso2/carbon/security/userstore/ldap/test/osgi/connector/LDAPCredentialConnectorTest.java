@@ -25,7 +25,7 @@ import java.util.Properties;
 public class LDAPCredentialConnectorTest extends LDAPIdentityConnectorTests{
 
     @Inject
-    @Filter("(connector-type=JDBCCredentialStore)")
+    @Filter("(connector-type=LDAPCredentialStore)")
     protected CredentialStoreConnectorFactory credentialStoreConnectorFactory;
 
     private static CredentialStoreConnector credentialStoreConnector;
@@ -42,9 +42,9 @@ public class LDAPCredentialConnectorTest extends LDAPIdentityConnectorTests{
         credentialStoreConnectorConfig.setPrimaryAttribute("username");
 
         Properties properties = new Properties();
-        properties.setProperty("dataSource", "WSO2_CARBON_DB");
-        properties.setProperty("hashAlgorithm", "SHA256");
-        properties.setProperty("databaseType", "MySQL");
+        properties.setProperty("connection_url", "ldap://localhost:389/dc=wso2,dc=com");
+        properties.setProperty("connection_name", "cn=admin,dc=wso2,dc=com");
+        properties.setProperty("connection_password", "admin");
         credentialStoreConnectorConfig.setProperties(properties);
         credentialStoreConnector.init(credentialStoreConnectorConfig);
     }

@@ -20,14 +20,12 @@ package org.wso2.carbon.security.userstore.ldap.test.osgi;
  */
 
 
-import com.google.inject.Inject;
+import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.junit.Configuration;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerSuite;
 import org.ops4j.pax.exam.testng.listener.PaxExam;
 import org.testng.annotations.Listeners;
-import org.wso2.carbon.identity.mgt.service.RealmService;
 import org.wso2.carbon.osgi.test.util.CarbonSysPropConfiguration;
 import org.wso2.carbon.osgi.test.util.OSGiTestConfigurationUtils;
 
@@ -43,19 +41,15 @@ import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 @Listeners(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
 
-public class LDAPIConnectorTests {
-    @Inject
-    protected RealmService realmService;
+public class LDAPConnectorTests {
+//    @Inject
+//    protected RealmService realmService;
 
     @Configuration
     public Option[] createConfiguration() {
 
         List<Option> optionList = new ArrayList<>();
 
-        optionList.add(mavenBundle()
-                .groupId("org.slf4j")
-                .artifactId("slf4j-api")
-                .versionAsInProject());
         optionList.add(mavenBundle()
                 .groupId("org.wso2.orbit.com.nimbusds")
                 .artifactId("nimbus-jose-jwt")
@@ -82,7 +76,7 @@ public class LDAPIConnectorTests {
                 .versionAsInProject());
         optionList.add(mavenBundle()
                 .groupId("org.wso2.carbon.security.userstore")
-                .artifactId("org.wso2.carbon.security.userstore.ldap")
+                .artifactId("org.wso2.carbon.security.userstore.jdbc")
                 .versionAsInProject());
         optionList.add(mavenBundle()
                 .groupId("org.wso2.carbon.identity.mgt")
@@ -99,6 +93,14 @@ public class LDAPIConnectorTests {
         optionList.add(mavenBundle()
                 .groupId("com.h2database")
                 .artifactId("h2")
+                .versionAsInProject());
+        optionList.add(mavenBundle()
+                .groupId("org.ops4j.pax.logging")
+                .artifactId("pax-logging-api")
+                .versionAsInProject());
+        optionList.add(mavenBundle()
+                .groupId("org.wso2.carbon.security.userstore")
+                .artifactId("org.wso2.carbon.userstore.ldap")
                 .versionAsInProject());
 
         CarbonSysPropConfiguration sysPropConfiguration = new CarbonSysPropConfiguration();

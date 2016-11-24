@@ -20,8 +20,7 @@ package org.wso2.carbon.userstore.ldap.datasource;
  */
 public class LDAPConstants {
 
-    public static final String DATA_SOURCE = "dataSource";
-    public static final String LDAP_DATASOURCE_TYPE = "LDAP";
+
     public static final String LDAP_CONTEXT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
     public static final String LDAP_POOLING_ENABLED = "com.sun.jndi.ldap.connect.pool";
     public static final String LDAP_REFERRAL = "java.naming.referral";
@@ -53,17 +52,15 @@ public class LDAPConstants {
     public static final String CONNECTION_URL = "connection_url";
     public static final String CONNECTION_NAME = "connection_name";
     public static final String CONNECTION_PASSWORD = "connection_password";
-    public static final String LDAP_SEARCH_BASE = "ldap_search_base";
     public static final String DOMAIN_SEPARATOR = "domain_seperator";
     public static final String USER_LOGIN_STRING = "user_login_string";
     public static final String MAX_ROW_LIMIT = "max_row_limit";
     public static final String USER_SEARCH_BASE = "user_search_base";
-    public static final String PROVIDER_PATH = "provider_path";
     public static final String USER_NAME_LIST_FILTER = "UserNameListFilter";
     public static final String USER_NAME_ATTRIBUTE = "UserNameAttribute";
     public static final String DISPLAY_NAME_ATTRIBUTE = "DisplayNameAttribute";
-    public static final String USER_DN_PATTERN = "UserDNPattern";
-    public static final String PROPERTY_REFERRAL = "Referral";
+    public static final String AUTHENTICATION_TYPE = "Authentication_type";
+
 
     //filter attribute in user-mgt.xml that filters users by user name
     public static final String USER_NAME_SEARCH_FILTER = "UserNameSearchFilter";

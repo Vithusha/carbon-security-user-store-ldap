@@ -18,6 +18,7 @@ package org.wso2.carbon.userstore.ldap.connector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.carbon.datasource.core.exception.DataSourceException;
 import org.wso2.carbon.identity.mgt.IdentityCallback;
 import org.wso2.carbon.identity.mgt.config.CredentialStoreConnectorConfig;
 import org.wso2.carbon.identity.mgt.constant.UserCoreConstants;
@@ -61,12 +62,11 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
         this.credentialStoreId = credentialStoreConnectorConfig.getConnectorId();
         // check if required configurations are in the user-mgt.xml
 
-      /*  try {
-            new LDAPStoreConfig().checkRequiredUserStoreConfigurations();
-        } catch (IdentityStoreException e) {
-
-        }*/
-
+        try {
+            connectionSource = new LDAPConnectionContext(properties);
+        } catch (DataSourceException e) {
+            throw  new  CredentialStoreException("Error occurred while initiating data source.",e);
+        }
 
         if (log.isDebugEnabled()) {
             log.debug("Initialization Started " + System.currentTimeMillis());
