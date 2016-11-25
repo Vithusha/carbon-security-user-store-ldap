@@ -34,10 +34,7 @@ import org.wso2.carbon.userstore.ldap.datasource.utils.LDAPConnectionContext;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.PartialResultException;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
+import javax.naming.directory.*;
 import javax.sql.DataSource;
 import java.util.*;
 
@@ -483,16 +480,78 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
     }
 
     @Override
-    public String addUser(List<Attribute> list) throws IdentityStoreConnectorException {
+    public String addUser(List<Attribute> attributes) throws IdentityStoreConnectorException {
+//
+//        throw new IdentityStoreConnectorException(
+//                "User store is operating in read only mode. Cannot write into the user store.");
 
-        throw new IdentityStoreConnectorException(
-                "User store is operating in read only mode. Cannot write into the user store.");
+        String primaryAttributeValue = attributes.stream()
+                .filter(attribute -> attribute.getAttributeName().equals(connectorUserId))
+                .map(attribute -> attribute.getAttributeValue())
+                .findFirst()
+                .orElse(null);
+
+
+
+
+        if (StringUtils.isNullOrEmptyAfterTrim(primaryAttributeValue)) {
+
+            throw new IdentityStoreConnectorException("Primary Attribute " + connectorUserId + " is not found among the " +
+                        "attribute list");
+            }
+        BasicAttribute attr;
+        BasicAttributes entry = new BasicAttributes();
+        int i=0;
+        for (Attribute attribute : attributes) {
+
+            String name = attribute.getAttributeName();
+            String value = attribute.getAttributeValue();
+            attr = new BasicAttribute(name, value);
+            entry.put(attr);
+
+        }
+
+        BasicAttribute object_Class = new BasicAttribute("objectClass");
+//        objectClass.add("top");
+//        objectClass.add("person");
+//        objectClass.add("organizationalPerson");
+//        objectClass.add("inetOrgPerson");
+        object_Class.add("user");
+        entry.put(object_Class);
+
+
+
+        try {
+
+            // get a handle to an Initial DirContext
+            DirContext context=connectionSource.getContext();
+
+            context.createSubcontext("uid = " + primaryAttributeValue, entry);
+
+        } catch (CredentialStoreException|NamingException e) {
+            throw  new IdentityStoreConnectorException("Error occured while adding Users to the Userstore",e);
+        }
+
+        return primaryAttributeValue;
     }
 
     @Override
-    public Map<String, String> addUsers(Map<String, List<Attribute>> map) throws IdentityStoreException {
-        throw new IdentityStoreException(
-                "User store is operating in read only mode. Cannot write into the user store.");
+    public Map<String, String> addUsers(Map<String, List<Attribute>> attributes) throws IdentityStoreException {
+        IdentityStoreException identityStoreException = new IdentityStoreException();
+        Map<String, String> userIdsToReturn = new HashMap<>();
+        attributes.entrySet().stream().forEach(entry -> {
+            try {
+                String userId = addUser(entry.getValue());
+                userIdsToReturn.put(entry.getKey(), userId);
+            } catch (IdentityStoreConnectorException e) {
+                identityStoreException.addSuppressed(e);
+            }
+        });
+
+        if (identityStoreException.getSuppressed().length > 0) {
+            throw identityStoreException;
+        }
+        return userIdsToReturn;
     }
 
     @Override

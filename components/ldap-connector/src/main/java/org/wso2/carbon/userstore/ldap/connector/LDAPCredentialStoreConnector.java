@@ -27,7 +27,6 @@ import org.wso2.carbon.identity.mgt.exception.CredentialStoreException;
 import org.wso2.carbon.identity.mgt.store.connector.CredentialStoreConnector;
 import org.wso2.carbon.userstore.ldap.datasource.utils.LDAPConnectionContext;
 
-import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.PasswordCallback;
@@ -102,12 +101,7 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
         userId= userData.get(UserCoreConstants.USER_ID);
         passWord = new String(password);
 
-        try {
-           connectionSource.getContextWithCredentials(userId, passWord);
-
-        } catch (NamingException e) {
-            throw  new CredentialStoreException("Invalid username or password" + e);
-        }
+        connectionSource.getContextWithCredentials(userId, passWord);
 
 
     }

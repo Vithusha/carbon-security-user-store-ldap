@@ -54,18 +54,24 @@ import java.util.Properties;
         @SuppressWarnings({"rawtypes", "unchecked"})
         public LDAPConnectionContext(Properties properties) throws DataSourceException {
 
+            String contextFactory=properties.getProperty(LDAPConstants.LDAP_CONTEXT_FACTORY);
             String connectionURL = properties.getProperty(LDAPConstants.CONNECTION_URL);
             String connectionName = properties.getProperty(LDAPConstants.CONNECTION_NAME);
             String connectionPassword = properties.getProperty(LDAPConstants.CONNECTION_PASSWORD);
+
 
             if (log.isDebugEnabled()) {
                 log.debug("Connection Name :: " + connectionName + ", Connection URL :: " + connectionURL);
             }
 
             environment = new Hashtable<>();
-            environment.put(Context.INITIAL_CONTEXT_FACTORY, LDAPConstants.LDAP_CONTEXT_FACTORY);
-            environment.put(Context.SECURITY_AUTHENTICATION, LDAPConstants.AUTHENTICATION_TYPE);
+            environment.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
 
+            environment.put(Context.SECURITY_AUTHENTICATION, "simple");
+
+            if (connectionURL != null) {
+                environment.put(Context.PROVIDER_URL, connectionURL);
+            }
             if (connectionName != null) {
                 environment.put(Context.SECURITY_PRINCIPAL, connectionName);
             }
@@ -74,9 +80,7 @@ import java.util.Properties;
                 environment.put(Context.SECURITY_CREDENTIALS, connectionPassword);
             }
 
-            if (connectionURL != null) {
-                environment.put(Context.PROVIDER_URL, connectionURL);
-            }
+
 
             // Enable connection pooling if property is set in user-mgt.xml
             boolean isLDAPConnectionPoolingEnabled = false;
@@ -127,10 +131,10 @@ import java.util.Properties;
             }
             return (context);
         }
-        //TODO: Naming Exception to be caught, Access Modifier
+
 
         public LdapContext getContextWithCredentials(String userDN, String password)
-                throws CredentialStoreException, NamingException {
+                throws CredentialStoreException {
             LdapContext context;
 
             //create a temp env for this particular authentication session by copying the original env
@@ -143,7 +147,11 @@ import java.util.Properties;
             tempEnv.put(Context.SECURITY_CREDENTIALS, password);
 
             //replace environment properties with these credentials
-            context = new InitialLdapContext(tempEnv, null);
+            try {
+                context = new InitialLdapContext(tempEnv, null);
+            } catch (NamingException e) {
+                throw new CredentialStoreException("Error occured while obtaining connection with Credentials" ,e);
+            }
             return (context);
 
         }
