@@ -40,6 +40,10 @@
             <artifactId>pax-logging-api</artifactId>
         </dependency>
 
+
+
+
+
     </dependencies>
 
     <properties>

@@ -460,9 +460,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
             while (answer.hasMore()) {
                 isUser = true;
             }
-        } catch (CredentialStoreException e) {
-            throw new IdentityStoreException();
-        } catch (NamingException e) {
+        } catch (CredentialStoreException|NamingException e) {
             throw new IdentityStoreException();
         }
 
@@ -481,9 +479,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
 
     @Override
     public String addUser(List<Attribute> attributes) throws IdentityStoreConnectorException {
-//
-//        throw new IdentityStoreConnectorException(
-//                "User store is operating in read only mode. Cannot write into the user store.");
+
 
         String primaryAttributeValue = attributes.stream()
                 .filter(attribute -> attribute.getAttributeName().equals(connectorUserId))
@@ -511,14 +507,15 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
 
         }
 
-        BasicAttribute object_Class = new BasicAttribute("objectClass");
+        BasicAttribute objClass = new BasicAttribute("objectClass");
+
+        //TODO: Check the objectClass is correct with user
 //        objectClass.add("top");
 //        objectClass.add("person");
 //        objectClass.add("organizationalPerson");
 //        objectClass.add("inetOrgPerson");
-        object_Class.add("user");
-        entry.put(object_Class);
-
+        objClass.add("user");
+        entry.put(objClass);
 
 
         try {
@@ -529,7 +526,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
             context.createSubcontext("uid = " + primaryAttributeValue, entry);
 
         } catch (CredentialStoreException|NamingException e) {
-            throw  new IdentityStoreConnectorException("Error occured while adding Users to the Userstore",e);
+            throw  new IdentityStoreConnectorException("Error occured while adding Users to the Userstore", e);
         }
 
         return primaryAttributeValue;
@@ -555,9 +552,42 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
     }
 
     @Override
-    public String updateUserAttributes(String s, List<Attribute> list) throws IdentityStoreException {
-        throw new IdentityStoreException(
-                "User store is operating in read only mode. Cannot write into the user store.");
+    public String updateUserAttributes(String userID, List<Attribute> attributes) throws IdentityStoreException {
+        //PUT operation
+        String primaryAttributeValue = attributes.stream()
+                .filter(attribute -> attribute.getAttributeName().equals(connectorUserId))
+                .map(attribute -> attribute.getAttributeValue())
+                .findFirst()
+                .orElse(null);
+
+        String userIdentifierNew = userID;
+        try {
+            DirContext context=connectionSource.getContext();
+
+        if (!StringUtils.isNullOrEmptyAfterTrim(primaryAttributeValue)) {
+
+            String update_attr=DatabaseColumnNames.User.USER_UNIQUE_ID;
+            ModificationItem[] mods = new ModificationItem[attributes.size()];
+
+            mods[0] = new ModificationItem(DirContext.REPLACE_ATTRIBUTE,
+                    new BasicAttribute(update_attr, primaryAttributeValue));
+
+            // Perform the requested modifications on the named object
+            context.modifyAttributes("uid = "+ primaryAttributeValue, mods);
+            userIdentifierNew=primaryAttributeValue;
+            attributes.remove(userIdentifierNew);
+
+            int i=1;
+            for (Attribute attribute : attributes) {
+                mods[i]=new ModificationItem(DirContext.REPLACE_ATTRIBUTE,new BasicAttribute(attribute.getAttributeName(),attribute.getAttributeValue()));
+                i++;
+            }
+        }
+
+        } catch (CredentialStoreException|NamingException e) {
+            throw  new IdentityStoreClientException("Error occurred while updating user.", e);
+        }
+        return primaryAttributeValue;
     }
 
     @Override
@@ -861,5 +891,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
 
 
     }
+
+
 
 }

@@ -27,7 +27,6 @@ import org.wso2.carbon.identity.mgt.exception.CredentialStoreException;
 import org.wso2.carbon.identity.mgt.store.connector.CredentialStoreConnector;
 import org.wso2.carbon.userstore.ldap.datasource.utils.LDAPConnectionContext;
 
-import javax.naming.directory.DirContext;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.PasswordCallback;
 import java.util.Map;
@@ -48,7 +47,6 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
     private static Logger log = LoggerFactory.getLogger(LDAPCredentialStoreConnector.class);
     private Properties properties;
     private String credentialStoreId;
-    private DirContext context;
     private CredentialStoreConnectorConfig credentialConnectorConfig;
     LDAPConnectionContext connectionSource;
 
@@ -75,16 +73,17 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
 
     @Override
     public String getCredentialStoreConnectorId() {
-
         return credentialStoreId;
     }
 
     @Override
-    public void authenticate(Callback[] callbacks) throws CredentialStoreException, AuthenticationFailure {
+    public void authenticate(Callback[] callbacks) throws AuthenticationFailure, CredentialStoreException {
         Map<String, String> userData = null;
         char[] password = null;
         String userId;
         String passWord;
+
+        try {
 
         for (Callback callback : callbacks) {
             if (callback instanceof PasswordCallback) {
@@ -100,9 +99,10 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
 
         userId= userData.get(UserCoreConstants.USER_ID);
         passWord = new String(password);
-
-        connectionSource.getContextWithCredentials(userId, passWord);
-
+            connectionSource.getContextWithCredentials(userId, passWord);
+        } catch (CredentialStoreException e) {
+            throw  new CredentialStoreException("Exception occurred while authenticating the user", e);
+        }
 
     }
 
@@ -160,6 +160,7 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
         throw new CredentialStoreException(
                 "User store is operating in read only mode. Cannot write into the user store.");
     }
+
 
 
 }

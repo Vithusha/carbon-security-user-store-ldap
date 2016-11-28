@@ -30,8 +30,6 @@ import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-import javax.naming.ldap.InitialLdapContext;
-import javax.naming.ldap.LdapContext;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Properties;
@@ -54,7 +52,7 @@ import java.util.Properties;
         @SuppressWarnings({"rawtypes", "unchecked"})
         public LDAPConnectionContext(Properties properties) throws DataSourceException {
 
-            String contextFactory=properties.getProperty(LDAPConstants.LDAP_CONTEXT_FACTORY);
+            String contextFactory = properties.getProperty(LDAPConstants.LDAP_CONTEXT_FACTORY);
             String connectionURL = properties.getProperty(LDAPConstants.CONNECTION_URL);
             String connectionName = properties.getProperty(LDAPConstants.CONNECTION_NAME);
             String connectionPassword = properties.getProperty(LDAPConstants.CONNECTION_PASSWORD);
@@ -65,21 +63,20 @@ import java.util.Properties;
             }
 
             environment = new Hashtable<>();
-            environment.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
 
-            environment.put(Context.SECURITY_AUTHENTICATION, "simple");
+            environment.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
 
             if (connectionURL != null) {
                 environment.put(Context.PROVIDER_URL, connectionURL);
             }
+            environment.put(Context.SECURITY_AUTHENTICATION, "simple");
+
             if (connectionName != null) {
                 environment.put(Context.SECURITY_PRINCIPAL, connectionName);
             }
-
             if (connectionPassword != null) {
-                environment.put(Context.SECURITY_CREDENTIALS, connectionPassword);
+                environment.put(Context.SECURITY_CREDENTIALS,connectionPassword);
             }
-
 
 
             // Enable connection pooling if property is set in user-mgt.xml
@@ -109,12 +106,12 @@ import java.util.Properties;
 
             }
 
-
         }
 
         public DirContext getContext() throws CredentialStoreException {
             DirContext context;
             try {
+
                 context = new InitialDirContext(environment);
 
             } catch (NamingException e) {
@@ -133,9 +130,9 @@ import java.util.Properties;
         }
 
 
-        public LdapContext getContextWithCredentials(String userDN, String password)
+        public DirContext getContextWithCredentials(String userDN, String password)
                 throws CredentialStoreException {
-            LdapContext context;
+            DirContext context;
 
             //create a temp env for this particular authentication session by copying the original env
             Hashtable<String, String> tempEnv = new Hashtable<>();
@@ -148,35 +145,13 @@ import java.util.Properties;
 
             //replace environment properties with these credentials
             try {
-                context = new InitialLdapContext(tempEnv, null);
+                context = new InitialDirContext(tempEnv);
             } catch (NamingException e) {
-                throw new CredentialStoreException("Error occured while obtaining connection with Credentials" ,e);
+                throw new CredentialStoreException("Error occured while obtaining connection with Credentials" , e);
             }
             return (context);
 
         }
-
-
-
-    /**
-     * Method description
-     *
-     *
-     * @param token
-     * @param result
-     *
-     * @return
-     */
-
-
-/**
- * Perform authentication based on the supplied token.
- *
- */
-
-
-
-
 
 }
 
