@@ -28,6 +28,8 @@ public class LDAPConstants {
     public static final String LDAP_READ_TIMEOUT = "com.sun.jndi.ldap.read.timeout";
     public static final String LDAP_CONNECTION_TIMEOUT = "com.sun.jndi.ldap.connect.timeout";
 
+
+
     //pooling constants
     public static final String LDAP_POOL_AUTHENTICATION = "com.sun.jndi.ldap.connect.pool.authentication";
     public static final String LDAP_POOL_DEBUG = "com.sun.jndi.ldap.connect.pool.debug";

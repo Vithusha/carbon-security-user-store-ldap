@@ -19,18 +19,19 @@ package org.wso2.carbon.userstore.ldap.connector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.carbon.datasource.core.exception.DataSourceException;
-import org.wso2.carbon.identity.mgt.IdentityCallback;
+import org.wso2.carbon.identity.mgt.callback.IdentityCallback;
 import org.wso2.carbon.identity.mgt.config.CredentialStoreConnectorConfig;
 import org.wso2.carbon.identity.mgt.constant.UserCoreConstants;
 import org.wso2.carbon.identity.mgt.exception.AuthenticationFailure;
-import org.wso2.carbon.identity.mgt.exception.CredentialStoreException;
+import org.wso2.carbon.identity.mgt.exception.CredentialStoreConnectorException;
 import org.wso2.carbon.identity.mgt.store.connector.CredentialStoreConnector;
+import org.wso2.carbon.security.caas.user.core.exception.CredentialStoreException;
 import org.wso2.carbon.userstore.ldap.datasource.utils.LDAPConnectionContext;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.PasswordCallback;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * LDAP based implementation for credential store connector.
@@ -45,14 +46,14 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
 
 
     private static Logger log = LoggerFactory.getLogger(LDAPCredentialStoreConnector.class);
-    private Properties properties;
+    private Map<String, String> properties;
     private String credentialStoreId;
     private CredentialStoreConnectorConfig credentialConnectorConfig;
     LDAPConnectionContext connectionSource;
 
 
     @Override
-    public void init(CredentialStoreConnectorConfig credentialStoreConnectorConfig) throws CredentialStoreException {
+    public void init(CredentialStoreConnectorConfig credentialStoreConnectorConfig) throws CredentialStoreConnectorException {
 
         this.credentialConnectorConfig = credentialStoreConnectorConfig;
         this.properties = credentialConnectorConfig.getProperties();
@@ -62,7 +63,7 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
         try {
             connectionSource = new LDAPConnectionContext(properties);
         } catch (DataSourceException e) {
-            throw  new  CredentialStoreException("Error occurred while initiating data source.",e);
+            throw  new  CredentialStoreConnectorException("Error occurred while initiating data source.",e);
         }
 
         if (log.isDebugEnabled()) {
@@ -77,13 +78,16 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
     }
 
     @Override
-    public void authenticate(Callback[] callbacks) throws AuthenticationFailure, CredentialStoreException {
+    public void authenticate(String connectorUserId, Callback[] callbacks) throws CredentialStoreConnectorException, AuthenticationFailure {
+
+    }
+
+
+    public void authenticate(Callback[] callbacks) throws AuthenticationFailure, CredentialStoreConnectorException {
         Map<String, String> userData = null;
         char[] password = null;
         String userId;
         String passWord;
-
-        try {
 
         for (Callback callback : callbacks) {
             if (callback instanceof PasswordCallback) {
@@ -99,9 +103,10 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
 
         userId= userData.get(UserCoreConstants.USER_ID);
         passWord = new String(password);
+        try {
             connectionSource.getContextWithCredentials(userId, passWord);
         } catch (CredentialStoreException e) {
-            throw  new CredentialStoreException("Exception occurred while authenticating the user", e);
+            throw new CredentialStoreConnectorException("Error while establishing the connection" +e );
         }
 
     }
@@ -127,37 +132,47 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
     }
 
     @Override
+    public boolean canStore(Callback[] callbacks) {
+        return false;
+    }
+
+    @Override
     public CredentialStoreConnectorConfig getCredentialStoreConfig() {
         return credentialConnectorConfig;
     }
 
     @Override
-    public void updateCredential(Callback[] callbacks) throws CredentialStoreException {
-        throw new CredentialStoreException(
+    public void updateCredential(Callback[] callbacks) throws CredentialStoreConnectorException {
+        throw new CredentialStoreConnectorException(
                 "User store is operating in read only mode. Cannot write into the user store.");
     }
 
     @Override
-    public void updateCredential(String s, Callback[] callbacks) throws CredentialStoreException {
-        throw new CredentialStoreException(
+    public void updateCredential(String s, Callback[] callbacks) throws CredentialStoreConnectorException {
+        throw new CredentialStoreConnectorException(
                 "User store is operating in read only mode. Cannot write into the user store.");
     }
 
     @Override
-    public String addCredential(Callback[] callbacks) throws CredentialStoreException {
-        throw new CredentialStoreException(
+    public String addCredential(Callback[] callbacks) throws CredentialStoreConnectorException {
+        throw new CredentialStoreConnectorException(
                 "User store is operating in read only mode. Cannot write into the user store.");
     }
 
     @Override
-    public void addCredential(String s, Callback[] callbacks) throws CredentialStoreException {
-        throw new CredentialStoreException(
+    public Map<String, String> addCredentials(Map<String, List<Callback>> map) throws CredentialStoreConnectorException {
+        return null;
+    }
+
+    @Override
+    public void addCredential(String s, Callback[] callbacks) throws CredentialStoreConnectorException {
+        throw new CredentialStoreConnectorException(
                 "User store is operating in read only mode. Cannot write into the user store.");
     }
 
     @Override
-    public void deleteCredential(String s) throws CredentialStoreException {
-        throw new CredentialStoreException(
+    public void deleteCredential(String s) throws CredentialStoreConnectorException {
+        throw new CredentialStoreConnectorException(
                 "User store is operating in read only mode. Cannot write into the user store.");
     }
 

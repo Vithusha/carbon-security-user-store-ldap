@@ -45,7 +45,7 @@ storeConnectors:
     domainName: "carbon"
     properties:
       dataSource: "WSO2_CARBON_DB"
-      databaseType: "MySQL"
+
 
  authorizationStoreConnectors:
   -

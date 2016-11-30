@@ -7,13 +7,12 @@ import org.wso2.carbon.identity.mgt.config.IdentityStoreConnectorConfig;
 import org.wso2.carbon.identity.mgt.exception.IdentityStoreConnectorException;
 import org.wso2.carbon.identity.mgt.exception.IdentityStoreException;
 import org.wso2.carbon.identity.mgt.store.connector.IdentityStoreConnector;
-import org.wso2.carbon.identity.mgt.store.connector.IdentityStoreConnectorFactory;
 import org.wso2.carbon.security.userstore.ldap.test.osgi.LDAPConnectorTests;
 import org.wso2.carbon.userstore.ldap.connector.factory.LDAPIdentityStoreConnectorFactory;
 
 import javax.inject.Inject;
 import javax.naming.Context;
-import java.util.Properties;
+import java.util.Map;
 
 /**
  * Created by wso2 on 11/8/16.
@@ -22,18 +21,17 @@ public class LDAPIdentityConnectorTests extends LDAPConnectorTests {
 
     @Inject
     @Filter("(connector-type=LDAPIdentityStore)")
-    protected IdentityStoreConnectorFactory identityStoreConnectorFactory;
+    protected LDAPIdentityStoreConnectorFactory identityStoreConnectorFactory;
 
     private static IdentityStoreConnector identityStoreConnector;
 
-    private void initConnector() throws IdentityStoreException {
+    private void initConnector() throws IdentityStoreException, IdentityStoreConnectorException {
         Assert.assertNotNull(identityStoreConnectorFactory);
         Assert.assertTrue(identityStoreConnectorFactory instanceof LDAPIdentityStoreConnectorFactory);
-        identityStoreConnector = identityStoreConnectorFactory.getConnector();
+        identityStoreConnector = identityStoreConnectorFactory.getInstance();
         IdentityStoreConnectorConfig identityStoreConnectorConfig = new IdentityStoreConnectorConfig();
         identityStoreConnectorConfig.setConnectorId("LDAPIS1");
         identityStoreConnectorConfig.setConnectorType("LDAPPrivilegedIdentityStore");
-        identityStoreConnectorConfig.setDomainName("carbon");
 //        List<String> uniqueAttributes = new ArrayList<>();
 //        uniqueAttributes.add("username");
 //        uniqueAttributes.add("email");
@@ -42,14 +40,18 @@ public class LDAPIdentityConnectorTests extends LDAPConnectorTests {
 //        otherAttributes.add("firstName");
 //        otherAttributes.add("lastName");
 //        identityStoreConnectorConfig.setOtherAttributes(otherAttributes);
-        Properties properties = new Properties();
-        properties.setProperty(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        properties.setProperty(Context.PROVIDER_URL, "ldap://localhost:389/dc=wso2,dc=com");
-        properties.setProperty(Context.SECURITY_PRINCIPAL, "cn=admin,dc=wso2,dc=com");
-        properties.setProperty(Context.SECURITY_CREDENTIALS, "admin");
-        properties.setProperty(Context.SECURITY_AUTHENTICATION,"simple");
-        properties.setProperty("connectorUserId", "username");
-        properties.setProperty("connectorGroupId", "groupname");
+
+        Map<String, String> properties = null;
+      
+        
+        properties.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+        properties.put(Context.PROVIDER_URL, "ldap://localhost:389/dc=wso2,dc=com");
+        properties.put(Context.SECURITY_PRINCIPAL, "cn=admin,dc=wso2,dc=com");
+        properties.put(Context.SECURITY_CREDENTIALS, "admin");
+        properties.put(Context.SECURITY_AUTHENTICATION,"simple");
+        properties.put("connectorUserId", "username");
+        properties.put("connectorGroupId", "groupname");
+//        properties
         identityStoreConnectorConfig.setProperties(properties);
         identityStoreConnector.init(identityStoreConnectorConfig);
     }

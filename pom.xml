@@ -386,7 +386,7 @@
             <dependency>
                 <groupId>org.wso2.carbon.security.userstore</groupId>
                 <artifactId>org.wso2.carbon.security.userstore.jdbc</artifactId>
-                <version>${carbon.security.userstore.ldap.version}</version>
+                <version>${carbon.security.userstore.jdbc.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.ops4j.pax.exam</groupId>
@@ -406,13 +406,13 @@
         <org.exmple.circuitbreaker.version>2.0.0-SNAPSHOT</org.exmple.circuitbreaker.version>
 <!--<carbon.jndi.version>1.0.0</carbon.jndi.version>-->
         <carbon.core.version>5.1.0</carbon.core.version>
-        <carbon.security.userstore.ldap.version>1.0.0-SNAPSHOT</carbon.security.userstore.ldap.version>
+        <carbon.security.userstore.jdbc.version>1.0.0-SNAPSHOT</carbon.security.userstore.jdbc.version>
 
 
         <carbon.security.userstore.ldap.version>1.0.0-SNAPSHOT</carbon.security.userstore.ldap.version>
 
         <!--<carbon.security.caas.version>1.0.0-SNAPSHOT</carbon.security.caas.version>-->
-        <org.wso2.carbon.identity.user.mgt.version>1.0.0-SNAPSHOT</org.wso2.carbon.identity.user.mgt.version>
+        <org.wso2.carbon.identity.user.mgt.version>1.0.3-SNAPSHOT</org.wso2.carbon.identity.user.mgt.version>
         <carbon.jndi.version>1.0.0</carbon.jndi.version>
         <carbon.datasources.version>1.0.0</carbon.datasources.version>
         <carbon.feature.plugin.version>2.0.1</carbon.feature.plugin.version>

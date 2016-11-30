@@ -25,8 +25,10 @@ import org.wso2.carbon.userstore.ldap.connector.LDAPIdentityStoreConnector;
  */
 public class LDAPIdentityStoreConnectorFactory implements IdentityStoreConnectorFactory {
 
+
     @Override
-    public IdentityStoreConnector getConnector() {
+    public IdentityStoreConnector getInstance() {
         return new LDAPIdentityStoreConnector();
+
     }
 }

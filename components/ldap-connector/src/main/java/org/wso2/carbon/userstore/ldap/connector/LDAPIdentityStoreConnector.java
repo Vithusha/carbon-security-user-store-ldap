@@ -36,7 +36,10 @@ import javax.naming.NamingException;
 import javax.naming.PartialResultException;
 import javax.naming.directory.*;
 import javax.sql.DataSource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 
@@ -53,11 +56,11 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
     protected String connectorUserId;
     protected String connectorGroupId;
     protected LDAPConnectionContext connectionSource = null;
-    protected Properties properties;
+    protected Map<String, String> properties;
 
 
     @Override
-    public void init(IdentityStoreConnectorConfig identityStoreConnectorConfig) throws IdentityStoreException {
+    public void init(IdentityStoreConnectorConfig identityStoreConnectorConfig) throws IdentityStoreConnectorException {
 
         this.properties = identityStoreConnectorConfig.getProperties();
         this.identityStoreId = identityStoreConnectorConfig.getConnectorId();
@@ -68,17 +71,18 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
             connectionSource = new LDAPConnectionContext(properties);
 
         } catch (DataSourceException e) {
-            throw new IdentityStoreException("Error occurred while initiating data source.", e);
+            throw new IdentityStoreConnectorException("Error occurred while initiating data source.", e);
         }
 
 
         if (log.isDebugEnabled()) {
             log.debug("LDAP identity store with id: {} initialized successfully.", identityStoreId);
+            System.out.println("Init method is invoked properly");
         }
 
         //TODO check whether this is okay to be a property
-        connectorUserId = identityStoreConfig.getProperties().getProperty("connectorUserId");
-        connectorGroupId = identityStoreConfig.getProperties().getProperty("connectorGroupId");
+        connectorUserId = identityStoreConfig.getProperties().get("connectorUserId");
+        connectorGroupId = identityStoreConfig.getProperties().get("connectorGroupId");
     }
 
     @Override
@@ -88,12 +92,22 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
 
     @Override
     public String getConnectorUserId(String attributeName, String attributeValue) throws UserNotFoundException,
-            IdentityStoreException {
+            IdentityStoreConnectorException {
         return connectorUserId;
     }
 
     @Override
-    public int getUserCount() throws IdentityStoreException {
+    public List<String> listConnectorUserIds(String s, String s1, int i, int i1) throws IdentityStoreConnectorException {
+        return null;
+    }
+
+    @Override
+    public List<String> listConnectorUserIdsByPattern(String s, String s1, int i, int i1) throws IdentityStoreConnectorException {
+        return null;
+    }
+
+    @Override
+    public int getUserCount() throws IdentityStoreConnectorException {
 
 
         int count = 0;
@@ -105,21 +119,19 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
            DirContext context=  connectionSource.getContext();
 
             //TODO : Check the searchbase functionality
-            NamingEnumeration answer = context.search(LDAPConstants.USER_SEARCH_BASE, searchFilter, searchControls);
+            NamingEnumeration answer = context.search("", searchFilter, searchControls);
             while (answer.hasMore()) {
 
                 ++count;
             }
 
-        } catch (NamingException e) {
-            throw new IdentityStoreException("An error occurred while getting user count.", e);
-        } catch (CredentialStoreException e) {
-            throw  new IdentityStoreException("An error occurred while getting user count.", e);
+        } catch (NamingException|CredentialStoreConnectorException e) {
+            throw new IdentityStoreConnectorException("An error occurred while getting user count.", e);
         }
         return count;
     }
 
-    @Override
+
     public List<User.UserBuilder> getUserBuilderList(String attributeName, String filterPattern, int offset, int length)
             throws IdentityStoreException {
         // Get the max allowed row count if the length is -1.
@@ -142,9 +154,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
                 userList.add(new User.UserBuilder().setUserId(userUniqueId));
             }
 
-        } catch (CredentialStoreException e) {
-            throw new IdentityStoreException("An error occurred while getting the user ", e);
-        } catch (NamingException e) {
+        } catch (NamingException|CredentialStoreConnectorException e) {
             throw new IdentityStoreException("An error occurred while getting the user ", e);
         }
 
@@ -152,7 +162,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
         return userList;
     }
 
-    @Override
+
     public List<User.UserBuilder> getAllUserBuilderList(String attributeName, String filterPattern) throws
             IdentityStoreException {
         return getUserBuilderList(attributeName, filterPattern, 0, -1);
@@ -160,25 +170,28 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
 
 
     @Override
-    public List<Attribute> getUserAttributeValues(String userName) throws IdentityStoreException {
+    public List<Attribute> getUserAttributeValues(String userName) throws IdentityStoreConnectorException {
         DirContext context;
         List<String> attr_list = new ArrayList<>();
         try {
             context = connectionSource.getContext();
-            Attributes attrs = context.getAttributes("(&(objectClass=user)(cn=" + userName);
+            Attributes attrs = context.getAttributes("cn="+ userName);
             for (NamingEnumeration ae = attrs.getAll(); ae.hasMore(); ) {
-                attr_list.add((String) ae.next());
+                attr_list.add(ae.next().toString());
             }
-        } catch (CredentialStoreException | NamingException e) {
-            throw new IdentityStoreException("An error occured while getting the user Attributes ", e);
+
+
+            return getUserAttributeValues(userName, attr_list);
+
+        } catch (NamingException|IdentityStoreConnectorException|CredentialStoreConnectorException e) {
+            throw new IdentityStoreConnectorException("An error occured while getting the user Attributes ", e);
         }
 
 
-        return getUserAttributeValues(userName, attr_list);
     }
 
     @Override
-    public List<Attribute> getUserAttributeValues(String userName, List<String> attributeNames) throws IdentityStoreException {
+    public List<Attribute> getUserAttributeValues(String userName, List<String> attributeNames) throws IdentityStoreConnectorException {
         Map<String, Integer> repetitions = new HashMap<>();
 
         List<Attribute> userAttributes = new ArrayList<>();
@@ -188,7 +201,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
         repetitions.put(LDAPConstants.ATTRIBUTE_NAMES, attributeNames.size());
         String[] attributeArray = new String[attributeNames.size()];
         attributeArray = attributeNames.toArray(attributeArray);
-        String filter = "(&(objectClass=user)(cn =" + userName + ")";
+        String filter = "(&(objectClass=inetOrgPerson)(dc=wso2,dc=com))";
         try {
             DirContext context = connectionSource.getContext();
 
@@ -197,7 +210,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
             searchControls.setReturningAttributes(attributeArray);
 
             //NamingEnumeration<> resultSet=context.search(" ",filter,searchControls);
-            NamingEnumeration<SearchResult> answer = context.search(" ", filter, searchControls);
+            NamingEnumeration<SearchResult> answer = context.search("cn="+userName, filter, searchControls);
 
 
             if (answer.hasMore()) {
@@ -210,7 +223,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
                     userAttributes.add(attribute);
                 }
 
-                ;
+
             }
 
             if (log.isDebugEnabled()) {
@@ -221,14 +234,12 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
             return userAttributes;
 
 
-        } catch (CredentialStoreException e) {
-            throw new IdentityStoreException("Error occured while retreiving Group Attribute values" + e);
-        } catch (NamingException e) {
-            throw new IdentityStoreException("Error occured while retreiving Group Attribute values" + e);
+        } catch (NamingException|CredentialStoreConnectorException e) {
+            throw new IdentityStoreConnectorException("Error occured while retreiving Group Attribute values" + e);
         }
     }
 
-    @Override
+
     public Group.GroupBuilder getGroupBuilder(String attributeName, String filterPattern) throws GroupNotFoundException,
             IdentityStoreException {
         Group.GroupBuilder group = new Group.GroupBuilder();
@@ -244,9 +255,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
                 group.setGroupId(groupUniqueId);
             }
 
-        } catch (CredentialStoreException e) {
-            throw new IdentityStoreException("An error occurred while getting the user ", e);
-        } catch (NamingException e) {
+        } catch (NamingException|CredentialStoreConnectorException e) {
             throw new IdentityStoreException("An error occurred while getting the user ", e);
         }
 
@@ -254,7 +263,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
     }
 
     @Override
-    public int getGroupCount() throws IdentityStoreException {
+    public int getGroupCount() throws IdentityStoreConnectorException {
         int count = 0;
         String searchFilter = "(objectClass=group)";
         SearchControls searchControls = new SearchControls();
@@ -270,20 +279,28 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
                 ++count;
             }
 
-        } catch (NamingException e) {
-            throw new IdentityStoreException("An error occurred while getting user count.", e);
-        } catch (CredentialStoreException e) {
-            throw new IdentityStoreException("An error occurred while getting user count. ", e);
+        } catch (NamingException|CredentialStoreConnectorException e) {
+            throw new IdentityStoreConnectorException("An error occurred while getting user count.", e);
         }
         return count;
     }
 
     @Override
-    public String getConnectorGroupId(String s, String s1) throws GroupNotFoundException, IdentityStoreException {
+    public String getConnectorGroupId(String s, String s1) throws GroupNotFoundException, IdentityStoreConnectorException {
         return null;
     }
 
     @Override
+    public List<String> listConnectorGroupIds(String s, String s1, int i, int i1) throws IdentityStoreConnectorException {
+        return null;
+    }
+
+    @Override
+    public List<String> listConnectorGroupIdsByPattern(String s, String s1, int i, int i1) throws IdentityStoreConnectorException {
+        return null;
+    }
+
+
     public List<Group.GroupBuilder> getGroupBuilderList(String filterPattern, int offset, int length) throws
             IdentityStoreException {
         if (length == -1) {
@@ -307,9 +324,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
                 groupList.add(new Group.GroupBuilder().setGroupId(groupUniqueId));
             }
 
-        } catch (CredentialStoreException e) {
-            throw new IdentityStoreException("An error occurred while getting the group ", e);
-        } catch (NamingException e) {
+        } catch (NamingException|CredentialStoreConnectorException e) {
             throw new IdentityStoreException("An error occurred while getting the group ", e);
         }
 
@@ -318,7 +333,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
     }
 
     @Override
-    public List<Attribute> getGroupAttributeValues(String groupName) throws IdentityStoreException {
+    public List<Attribute> getGroupAttributeValues(String groupName) throws IdentityStoreConnectorException {
         DirContext context;
         List<String> attr_list = new ArrayList<>();
         try {
@@ -327,18 +342,19 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
             for (NamingEnumeration ae = attrs.getAll(); ae.hasMore(); ) {
                 attr_list.add((String) ae.next());
             }
-        } catch (CredentialStoreException | NamingException e) {
-            throw new IdentityStoreException("An error occured while getting the group Attributes ", e);
+
+
+            return getUserAttributeValues(groupName, attr_list);
+
+         } catch (NamingException|IdentityStoreConnectorException|CredentialStoreConnectorException e) {
+            throw new IdentityStoreConnectorException("An error occured while getting the group Attributes ", e);
         }
-
-
-        return getUserAttributeValues(groupName, attr_list);
     }
 
 
     @Override
     public List<Attribute> getGroupAttributeValues(String groupId, List<String> attributeNames) throws
-            IdentityStoreException {
+            IdentityStoreConnectorException {
 
 
         Map<String, Integer> repetitions = new HashMap<>();
@@ -383,15 +399,13 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
             return userAttributes;
 
 
-        } catch (CredentialStoreException e) {
-            throw new IdentityStoreException("Error occured while retreiving Group Attribute values" + e);
-        } catch (NamingException e) {
-            throw new IdentityStoreException("Error occured while retreiving Group Attribute values" + e);
+        } catch (NamingException|CredentialStoreConnectorException e) {
+            throw new IdentityStoreConnectorException("Error occured while retreiving Group Attribute values" + e);
         }
 
     }
 
-    @Override
+
     public List<Group.GroupBuilder> getGroupBuildersOfUser(String userName) throws IdentityStoreException {
         List<Group.GroupBuilder> groupList = new ArrayList<>();
         try {
@@ -432,21 +446,15 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
 
             context.close();
 
-        } catch (CredentialStoreException e) {
-            throw new IdentityStoreException("Error occured while listing groups of the user: " + e);
-        } catch (NamingException e) {
+        } catch (NamingException|CredentialStoreConnectorException e) {
             throw new IdentityStoreException("Error occured while listing groups of the user: " + e);
         }
         return groupList;
     }
 
-    @Override
-    public List<User.UserBuilder> getUserBuildersOfGroup(String userName) throws IdentityStoreException {
-        return null;
-    }
 
     @Override
-    public boolean isUserInGroup(String userId, String groupId) throws IdentityStoreException {
+    public boolean isUserInGroup(String userId, String groupId) throws IdentityStoreConnectorException {
         SearchControls searchControls = new SearchControls();
         searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         searchControls.setReturningAttributes(new String[]{DatabaseColumnNames.User.USER_UNIQUE_ID});
@@ -460,15 +468,15 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
             while (answer.hasMore()) {
                 isUser = true;
             }
-        } catch (CredentialStoreException|NamingException e) {
-            throw new IdentityStoreException();
+        } catch (NamingException|CredentialStoreConnectorException e) {
+            throw new IdentityStoreConnectorException();
         }
 
         return isUser;
     }
 
     @Override
-    public boolean isReadOnly() throws IdentityStoreException {
+    public boolean isReadOnly() throws IdentityStoreConnectorException {
         return true;
     }
 
@@ -510,11 +518,11 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
         BasicAttribute objClass = new BasicAttribute("objectClass");
 
         //TODO: Check the objectClass is correct with user
-//        objectClass.add("top");
-//        objectClass.add("person");
-//        objectClass.add("organizationalPerson");
-//        objectClass.add("inetOrgPerson");
-        objClass.add("user");
+        objClass.add("top");
+        objClass.add("person");
+        objClass.add("organizationalPerson");
+        objClass.add("inetOrgPerson");
+//        objClass.add("user");
         entry.put(objClass);
 
 
@@ -523,17 +531,16 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
             // get a handle to an Initial DirContext
             DirContext context=connectionSource.getContext();
 
-            context.createSubcontext("uid = " + primaryAttributeValue, entry);
+            context.createSubcontext("cn=" + primaryAttributeValue , entry);
 
-        } catch (CredentialStoreException|NamingException e) {
+        } catch (NamingException|CredentialStoreConnectorException e) {
             throw  new IdentityStoreConnectorException("Error occured while adding Users to the Userstore", e);
         }
-
         return primaryAttributeValue;
     }
 
     @Override
-    public Map<String, String> addUsers(Map<String, List<Attribute>> attributes) throws IdentityStoreException {
+    public Map<String, String> addUsers(Map<String, List<Attribute>> attributes) throws IdentityStoreConnectorException {
         IdentityStoreException identityStoreException = new IdentityStoreException();
         Map<String, String> userIdsToReturn = new HashMap<>();
         attributes.entrySet().stream().forEach(entry -> {
@@ -546,13 +553,13 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
         });
 
         if (identityStoreException.getSuppressed().length > 0) {
-            throw identityStoreException;
+            throw new IdentityStoreConnectorException("Error occured while adding Users to the Userstore");
         }
         return userIdsToReturn;
     }
 
     @Override
-    public String updateUserAttributes(String userID, List<Attribute> attributes) throws IdentityStoreException {
+    public String updateUserAttributes(String userID, List<Attribute> attributes) throws IdentityStoreConnectorException {
         //PUT operation
         String primaryAttributeValue = attributes.stream()
                 .filter(attribute -> attribute.getAttributeName().equals(connectorUserId))
@@ -577,89 +584,89 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
             userIdentifierNew=primaryAttributeValue;
             attributes.remove(userIdentifierNew);
 
-            int i=1;
+            int i=0;
             for (Attribute attribute : attributes) {
-                mods[i]=new ModificationItem(DirContext.REPLACE_ATTRIBUTE,new BasicAttribute(attribute.getAttributeName(),attribute.getAttributeValue()));
-                i++;
+                if(attribute.getAttributeName()!=primaryAttributeValue) {
+                    mods[i] = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, new BasicAttribute(attribute.getAttributeName(), attribute.getAttributeValue()));
+                    i++;
+                }
             }
         }
 
-        } catch (CredentialStoreException|NamingException e) {
-            throw  new IdentityStoreClientException("Error occurred while updating user.", e);
+        } catch (NamingException|CredentialStoreConnectorException e) {
+            throw  new IdentityStoreConnectorException("Error occurred while updating user.", e);
         }
         return primaryAttributeValue;
     }
 
     @Override
-    public String updateUserAttributes(String s, List<Attribute> list, List<Attribute> list1) throws
-            IdentityStoreException {
-        throw new IdentityStoreException(
-                "User store is operating in read only mode. Cannot write into the user store.");
+    public String updateUserAttributes(String s, List<Attribute> list, List<Attribute> list1) throws IdentityStoreConnectorException {
+        try {
+            throw new IdentityStoreException(
+                    "User store is operating in read only mode. Cannot write into the user store.");
+        } catch (IdentityStoreException e) {
+            throw  new IdentityStoreConnectorException();
+        }
     }
 
     @Override
-    public void deleteUser(String s) throws IdentityStoreException {
-        throw new IdentityStoreException(
-                "User store is operating in read only mode. Cannot write into the user store.");
+    public void deleteUser(String s) throws IdentityStoreConnectorException {
+
     }
 
     @Override
-    public void updateGroupsOfUser(String s, List<String> list) throws IdentityStoreException {
-        throw new IdentityStoreException(
-                "User store is operating in read only mode. Cannot write into the user store.");
+    public void updateGroupsOfUser(String s, List<String> list) throws IdentityStoreConnectorException {
+
     }
 
     @Override
-    public void updateGroupsOfUser(String s, List<String> list, List<String> list1) throws IdentityStoreException {
-        throw new IdentityStoreException(
-                "User store is operating in read only mode. Cannot write into the user store.");
+    public void updateGroupsOfUser(String s, List<String> list, List<String> list1) throws IdentityStoreConnectorException {
+
     }
 
     @Override
-    public String addGroup(List<Attribute> list) throws IdentityStoreException {
-        throw new IdentityStoreException(
-                "User store is operating in read only mode. Cannot write into the user store.");
+    public String addGroup(List<Attribute> list) throws IdentityStoreConnectorException {
+        return null;
     }
 
     @Override
-    public Map<String, String> addGroups(Map<String, List<Attribute>> map) throws IdentityStoreException {
-        throw new IdentityStoreException(
-                "User store is operating in read only mode. Cannot write into the user store.");
+    public Map<String, String> addGroups(Map<String, List<Attribute>> map) throws IdentityStoreConnectorException {
+        return null;
     }
 
     @Override
-    public String updateGroupAttributes(String s, List<Attribute> list) throws IdentityStoreException {
-        throw new IdentityStoreException(
-                "User store is operating in read only mode. Cannot write into the user store.");
+    public String updateGroupAttributes(String s, List<Attribute> list) throws IdentityStoreConnectorException {
+        return null;
     }
 
     @Override
-    public String updateGroupAttributes(String s, List<Attribute> list, List<Attribute> list1) throws
-            IdentityStoreException {
-        throw new IdentityStoreException(
-                "User store is operating in read only mode. Cannot write into the user store.");
+    public String updateGroupAttributes(String s, List<Attribute> list, List<Attribute> list1) throws IdentityStoreConnectorException {
+        return null;
     }
 
     @Override
-    public void deleteGroup(String s) throws IdentityStoreException {
-        throw new IdentityStoreException(
-                "User store is operating in read only mode. Cannot write into the user store.");
+    public void deleteGroup(String s) throws IdentityStoreConnectorException {
+
     }
 
     @Override
-    public void updateUsersOfGroup(String s, List<String> list) throws IdentityStoreException {
-        throw new IdentityStoreException(
-                "User store is operating in read only mode. Cannot write into the user store.");
+    public void updateUsersOfGroup(String s, List<String> list) throws IdentityStoreConnectorException {
+
     }
 
     @Override
-    public void updateUsersOfGroup(String s, List<String> list, List<String> list1) throws IdentityStoreException {
-        throw new IdentityStoreException(
-                "User store is operating in read only mode. Cannot write into the user store.");
+    public void updateUsersOfGroup(String s, List<String> list, List<String> list1) throws IdentityStoreConnectorException {
+
     }
+
 
     @Override
     public void removeAddedUsersInAFailure(List<String> list) throws IdentityStoreConnectorException {
+
+    }
+
+    @Override
+    public void removeAddedGroupsInAFailure(List<String> list) throws IdentityStoreConnectorException {
 
     }
 
@@ -668,7 +675,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
 
         int length;
 
-        String maxValue = identityStoreConfig.getProperties().getProperty(LDAPConstants.MAX_ROW_LIMIT);
+        String maxValue = identityStoreConfig.getProperties().get(LDAPConstants.MAX_ROW_LIMIT);
 
         if (maxValue == null) {
             length = Integer.MAX_VALUE;
@@ -683,7 +690,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
         boolean replaceEscapeCharacters = true;
 
         String replaceEscapeCharactersAtUserLoginString = properties
-                .getProperty(LDAPConstants.PROPERTY_REPLACE_ESCAPE_CHARACTERS_AT_USER_LOGIN);
+                .get(LDAPConstants.PROPERTY_REPLACE_ESCAPE_CHARACTERS_AT_USER_LOGIN);
 
         if (replaceEscapeCharactersAtUserLoginString != null) {
             replaceEscapeCharacters = Boolean
@@ -734,17 +741,17 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
 
         StringBuilder searchFilter =
                 new StringBuilder(
-                        properties.getProperty(LDAPConstants.USER_NAME_LIST_FILTER));
-        String searchBases = properties.getProperty(LDAPConstants.USER_SEARCH_BASE);
+                        properties.get(LDAPConstants.USER_NAME_LIST_FILTER));
+        String searchBases = properties.get(LDAPConstants.USER_SEARCH_BASE);
 
         String userNameProperty =
-                properties.getProperty(LDAPConstants.USER_NAME_ATTRIBUTE);
+                properties.get(LDAPConstants.USER_NAME_ATTRIBUTE);
 
         StringBuilder finalFilter = new StringBuilder();
 
         // read the display name attribute - if provided
         String displayNameAttribute =
-                properties.getProperty(LDAPConstants.DISPLAY_NAME_ATTRIBUTE);
+                properties.get(LDAPConstants.DISPLAY_NAME_ATTRIBUTE);
 
 
         if (StringUtils.isNullOrEmptyAfterTrim(displayNameAttribute)) {

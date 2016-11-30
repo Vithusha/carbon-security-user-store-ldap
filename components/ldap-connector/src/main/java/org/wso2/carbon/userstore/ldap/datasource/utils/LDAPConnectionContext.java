@@ -23,7 +23,8 @@ package org.wso2.carbon.userstore.ldap.datasource.utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.carbon.datasource.core.exception.DataSourceException;
-import org.wso2.carbon.identity.mgt.exception.CredentialStoreException;
+import org.wso2.carbon.identity.mgt.exception.CredentialStoreConnectorException;
+import org.wso2.carbon.security.caas.user.core.exception.CredentialStoreException;
 import org.wso2.carbon.userstore.ldap.datasource.LDAPConstants;
 
 import javax.naming.Context;
@@ -32,7 +33,6 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * Bean class to create LDAP connections.
@@ -50,12 +50,12 @@ import java.util.Properties;
 
 
         @SuppressWarnings({"rawtypes", "unchecked"})
-        public LDAPConnectionContext(Properties properties) throws DataSourceException {
+        public LDAPConnectionContext(Map<String, String> properties) throws DataSourceException {
 
-            String contextFactory = properties.getProperty(LDAPConstants.LDAP_CONTEXT_FACTORY);
-            String connectionURL = properties.getProperty(LDAPConstants.CONNECTION_URL);
-            String connectionName = properties.getProperty(LDAPConstants.CONNECTION_NAME);
-            String connectionPassword = properties.getProperty(LDAPConstants.CONNECTION_PASSWORD);
+            String contextFactory = properties.get(LDAPConstants.LDAP_CONTEXT_FACTORY);
+            String connectionURL = properties.get(LDAPConstants.CONNECTION_URL);
+            String connectionName = properties.get(LDAPConstants.CONNECTION_NAME);
+            String connectionPassword = properties.get(LDAPConstants.CONNECTION_PASSWORD);
 
 
             if (log.isDebugEnabled()) {
@@ -81,7 +81,7 @@ import java.util.Properties;
 
             // Enable connection pooling if property is set in user-mgt.xml
             boolean isLDAPConnectionPoolingEnabled = false;
-            String value = properties.getProperty(LDAPConstants.LDAP_POOLING_ENABLED);
+            String value = properties.get(LDAPConstants.LDAP_POOLING_ENABLED);
 
             if (value != null && !value.trim().isEmpty()) {
                 isLDAPConnectionPoolingEnabled = Boolean.parseBoolean(value);
@@ -90,14 +90,14 @@ import java.util.Properties;
             environment.put("com.sun.jndi.ldap.connect.pool", isLDAPConnectionPoolingEnabled ? "true" : "false");
 
             // set referral status if provided in configuration.
-            if (properties.getProperty(LDAPConstants.LDAP_REFERRAL) != null) {
+            if (properties.get(LDAPConstants.LDAP_REFERRAL) != null) {
                 environment.put("java.naming.referral",
-                        properties.getProperty(LDAPConstants.LDAP_REFERRAL));
+                        properties.get(LDAPConstants.LDAP_REFERRAL));
             }
             //Set connect timeout if provided in configuration. Otherwise set default value
 
-            String connectTimeout = properties.getProperty(CONNECTION_TIME_OUT);
-            String readTimeout = properties.getProperty(READ_TIME_OUT);
+            String connectTimeout = properties.get(CONNECTION_TIME_OUT);
+            String readTimeout = properties.get(READ_TIME_OUT);
             if (connectTimeout != null && !connectTimeout.trim().isEmpty()) {
                 environment.put("com.sun.jndi.ldap.connect.timeout", connectTimeout);
             } else {
@@ -108,7 +108,7 @@ import java.util.Properties;
 
         }
 
-        public DirContext getContext() throws CredentialStoreException {
+        public DirContext getContext() throws CredentialStoreConnectorException {
             DirContext context;
             try {
 
@@ -122,7 +122,7 @@ import java.util.Properties;
                     context = new InitialDirContext(environment);
                 } catch (Exception e1) {
                     log.error("Error obtaining connection for the second time" + e.getMessage(), e);
-                    throw new CredentialStoreException("Error obtaining connection. " + e.getMessage(), e);
+                    throw new CredentialStoreConnectorException("Error obtaining connection. " + e.getMessage(), e);
                 }
 
             }
