@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.carbon.identity.mgt.exception.CredentialStoreConnectorException;
 import org.wso2.carbon.identity.mgt.exception.IdentityStoreException;
-import org.wso2.carbon.userstore.ldap.datasource.LDAPConstants;
 
 import java.util.Properties;
 

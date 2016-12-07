@@ -17,8 +17,6 @@ package org.wso2.carbon.userstore.ldap.datasource.utils;
 
 import org.wso2.carbon.datasource.core.exception.DataSourceException;
 import org.wso2.carbon.datasource.utils.DataSourceUtils;
-import org.wso2.carbon.userstore.ldap.datasource.LDAPConfiguration;
-import org.wso2.carbon.userstore.ldap.datasource.LDAPConstants;
 import org.wso2.carbon.userstore.ldap.datasource.beans.LDAPDataSource;
 
 import javax.naming.Context;

@@ -24,8 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.carbon.datasource.core.exception.DataSourceException;
 import org.wso2.carbon.identity.mgt.exception.CredentialStoreConnectorException;
-import org.wso2.carbon.security.caas.user.core.exception.CredentialStoreException;
-import org.wso2.carbon.userstore.ldap.datasource.LDAPConstants;
+
 
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -64,12 +63,12 @@ import java.util.Map;
 
             environment = new Hashtable<>();
 
-            environment.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+            environment.put(Context.INITIAL_CONTEXT_FACTORY, contextFactory);
 
             if (connectionURL != null) {
                 environment.put(Context.PROVIDER_URL, connectionURL);
             }
-            environment.put(Context.SECURITY_AUTHENTICATION, "simple");
+            environment.put(Context.SECURITY_AUTHENTICATION, LDAPConstants.AUTHENTICATION_TYPE);
 
             if (connectionName != null) {
                 environment.put(Context.SECURITY_PRINCIPAL, connectionName);
@@ -131,7 +130,7 @@ import java.util.Map;
 
 
         public DirContext getContextWithCredentials(String userDN, String password)
-                throws CredentialStoreException {
+                throws CredentialStoreConnectorException {
             DirContext context;
 
             //create a temp env for this particular authentication session by copying the original env
@@ -141,13 +140,14 @@ import java.util.Map;
             }
             //replace connection name and password with the passed credentials to this method
             tempEnv.put(Context.SECURITY_PRINCIPAL, userDN);
+            tempEnv.put(Context.SECURITY_AUTHENTICATION,"DIGEST-MD5");
             tempEnv.put(Context.SECURITY_CREDENTIALS, password);
 
             //replace environment properties with these credentials
             try {
                 context = new InitialDirContext(tempEnv);
             } catch (NamingException e) {
-                throw new CredentialStoreException("Error occured while obtaining connection with Credentials" , e);
+                throw new CredentialStoreConnectorException("Error occured while obtaining connection with Credentials" , e);
             }
             return (context);
 

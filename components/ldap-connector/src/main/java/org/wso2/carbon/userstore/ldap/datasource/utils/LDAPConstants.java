@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package org.wso2.carbon.userstore.ldap.datasource;
+package org.wso2.carbon.userstore.ldap.datasource.utils;
 
 /**
  * Class holding the default values for LDAP configuration.
@@ -27,7 +27,6 @@ public class LDAPConstants {
     public static final String LDAP_ATTRIBUTES_BINARY = "java.naming.ldap.attributes.binary";
     public static final String LDAP_READ_TIMEOUT = "com.sun.jndi.ldap.read.timeout";
     public static final String LDAP_CONNECTION_TIMEOUT = "com.sun.jndi.ldap.connect.timeout";
-
 
 
     //pooling constants
@@ -47,6 +46,7 @@ public class LDAPConstants {
     public static final String GROUP_NAME_LIST_FILTER = "GroupNameListFilter";
     public static final String GROUP_NAME_ATTRIBUTE = "GroupNameAttribute";
     public static final String MEMBERSHIP_ATTRIBUTE = "MembershipAttribute";
+    public static final String MEMBEROF_ATTRIBUTE = "MemberOfAttribute";
     public static final String ATTRIBUTE_NAMES = "AttributeNames";
 
 
@@ -81,10 +81,26 @@ public class LDAPConstants {
     public static final String CARBON_HOME = "carbon.home";
     public static final int MAX_USER_LIST = 100;
     public static final int MAX_SEARCH_TIME = 10000;   // ms
+    public static final String AUTHENTICATE_PRINCIPAL_NAME = ",dc=wso2,dc=com";
+    public static final String HASH_ALGO = "hashAlgorithm";
+    public static final String ITERATION_COUNT = "iterationCount";
+    public static final String KEY_LENGTH = "keyLength";
+
+    //Userstore Constants
+    public static final String USER_STORE_NAME = "userStoreName";
+    public static final String EXECUTION_ORDER = "executionOrder";
+    public static final String READ_ONLY = "readOnly";
+    public static final String USER_STORE_CLASS = "userStoreClass";
+    public static final String PRIMARY = "PRIMARY";
+    public static final String USER_STORE_ID = "userStoreID";
+    public static final String USER_STORE_CONFIGURATION_FILE = "primary-userstore.yml";
+    public static final String CONNECTOR_TYPE = "connectorType";
+    public static final String PASSWORD_HANDLER_NAME = "passwordHandlerName";
+    public static final String USER_ID = "userId";
+    public static final String PRIMARY_USERSTORE = "primary";
+    public static final String USERSTORE_PRIORITY = "priority";
+    public static final String USERSTORE_DISPLAY_NAME = "display-name";
 
 
-    private LDAPConstants() {
-
-    }
 }
 

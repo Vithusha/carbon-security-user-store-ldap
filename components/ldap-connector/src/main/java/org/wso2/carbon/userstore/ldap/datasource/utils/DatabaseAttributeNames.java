@@ -19,7 +19,7 @@ package org.wso2.carbon.userstore.ldap.datasource.utils;
 /**
  * Names of the database table columns.
  */
-public class DatabaseColumnNames {
+public class DatabaseAttributeNames {
 
     /**
      * Names of the Group table columns.
