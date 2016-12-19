@@ -21,8 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.carbon.datasource.core.exception.DataSourceException;
 import org.wso2.carbon.identity.mgt.bean.Attribute;
-import org.wso2.carbon.identity.mgt.bean.Group;
-import org.wso2.carbon.identity.mgt.bean.User;
 import org.wso2.carbon.identity.mgt.config.IdentityStoreConnectorConfig;
 import org.wso2.carbon.identity.mgt.exception.*;
 import org.wso2.carbon.identity.mgt.store.connector.IdentityStoreConnector;
@@ -41,7 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.stream.Collectors;
 
 
 /**
@@ -120,29 +118,23 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
     @Override
     public List<Attribute> getUserAttributeValues(String userName) throws IdentityStoreConnectorException {
         DirContext context;
-        List<String> attr_list = new ArrayList<>();
-        List<Attribute> attributeList=new ArrayList<>();
+        List<Attribute> attributeList = new ArrayList<>();
         try {
             context = connectionSource.getContext();
-            Attributes attrs = context.getAttributes("cn="+ userName);
+            Attributes attrs = context.getAttributes("cn=" + userName);
             for (NamingEnumeration ae = attrs.getAll(); ae.hasMore(); ) {
-                String[] attr_pair=(ae.next().toString().split(":"));
-                String name=attr_pair[0];
-                String value=attr_pair[1];
+                String[] attr_pair = (ae.next().toString().split(":"));
+                String name = attr_pair[0];
+                String value = attr_pair[1];
                 Attribute attribute = new Attribute();
                 attribute.setAttributeName(name);
                 attribute.setAttributeValue(value);
-               attributeList.add(attribute);
+                attributeList.add(attribute);
             }
-
-
             return attributeList;
-
-        } catch (NamingException|CredentialStoreConnectorException e) {
+        } catch (NamingException | CredentialStoreConnectorException e) {
             throw new IdentityStoreConnectorException("An error occured while getting the user Attributes ", e);
         }
-
-
     }
 
     @Override
@@ -239,39 +231,6 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
         return count;
     }
 
-
-
-//    public List<Group.GroupBuilder> getGroupBuilderList(String filterPattern, int offset, int length) throws
-//            IdentityStoreException {
-//        if (length == -1) {
-//            length = getMaxRowRetrievalCount();
-//        }
-//
-//
-//        List<Group.GroupBuilder> groupList = new ArrayList<>();
-//        SearchControls searchControls = new SearchControls();
-//        searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-//        searchControls.setCountLimit(length);
-//        searchControls.setReturningAttributes(new String[]{DatabaseAttributeNames.Group.GROUP_UNIQUE_ID});
-//
-//        try {
-//            DirContext context = connectionSource.getContext();
-//            NamingEnumeration answer = context.search(DatabaseAttributeNames.Group.GROUP_NAME,
-//                    getFinalFilters(filterPattern), searchControls);
-//
-//            while (answer.hasMore()) {
-//                String groupUniqueId = answer.toString();
-//                groupList.add(new Group.GroupBuilder().setGroupId(groupUniqueId));
-//            }
-//
-//        } catch (NamingException|CredentialStoreConnectorException e) {
-//            throw new IdentityStoreException("An error occurred while getting the group ", e);
-//        }
-//
-//
-//        return groupList;
-//    }
-
     @Override
     public List<Attribute> getGroupAttributeValues(String groupName) throws IdentityStoreConnectorException {
         DirContext context;
@@ -284,7 +243,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
             }
 
 
-            return getUserAttributeValues(groupName, attr_list);
+            return getGroupAttributeValues(groupName, attr_list);
 
          } catch (NamingException|IdentityStoreConnectorException|CredentialStoreConnectorException e) {
             throw new IdentityStoreConnectorException("An error occured while getting the group Attributes ", e);
@@ -297,26 +256,24 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
             IdentityStoreConnectorException {
 
 
-        Map<String, Integer> repetitions = new HashMap<>();
-
         List<Attribute> userAttributes = new ArrayList<>();
-        repetitions.put(LDAPConstants.ATTRIBUTE_NAMES, attributeNames.size());
-
-        Map<String, Integer> repetition = new HashMap<>();
-        repetitions.put(LDAPConstants.ATTRIBUTE_NAMES, attributeNames.size());
         String[] attributeArray = new String[attributeNames.size()];
         attributeArray = attributeNames.toArray(attributeArray);
-//        String filter = "(&(objectClass=group)(ou =" + groupId + ")";
         String filter=IdentityStoreConfigConstants.groupNameSearchFilter;
+        filter.replaceAll("[?]",groupId);
         try {
             DirContext context = connectionSource.getContext();
 
-            SearchControls searchControls = new SearchControls();
-            searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            searchControls.setReturningAttributes(attributeArray);
+//            SearchControls searchControls = new SearchControls();
+//            searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+//            searchControls.setReturningAttributes(attributeArray);
 
-            //NamingEnumeration<> resultSet=context.search(" ",filter,searchControls);
-            NamingEnumeration<SearchResult> answer = context.search(IdentityStoreConfigConstants.groupSearchBase, filter, searchControls);
+//            NamingEnumeration<SearchResult> answer = context.search(IdentityStoreConfigConstants.groupSearchBase,
+//                    filter, searchControls);
+
+            NamingEnumeration<SearchResult> answer =searchForGroup(filter,attributeArray,context);
+
+
 
 
             if (answer.hasMore()) {
@@ -328,8 +285,6 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
                     attribute.setAttributeValue(String.valueOf(attrs.get(s)));
                     userAttributes.add(attribute);
                 }
-
-                ;
             }
 
             if (log.isDebugEnabled()) {
@@ -340,58 +295,11 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
             return userAttributes;
 
 
-        } catch (NamingException|CredentialStoreConnectorException e) {
+        } catch (NamingException|CredentialStoreConnectorException|IdentityStoreException e) {
             throw new IdentityStoreConnectorException("Error occured while retreiving Group Attribute values" + e);
         }
 
     }
-
-
-//    public List<Group.GroupBuilder> getGroupBuildersOfUser(String userName) throws IdentityStoreException {
-//        List<Group.GroupBuilder> groupList = new ArrayList<>();
-//        try {
-//            DirContext context = connectionSource.getContext();
-//
-//            SearchControls searchCtls = new SearchControls();
-//            searchCtls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-//            String searchFilter = "(&(objectClass=user)(CN=" + userName + "))";
-//
-//
-//            //Specify the attributes to return
-//            String returnedAtts[] = {"memberOf"};
-//            searchCtls.setReturningAttributes(returnedAtts);
-//
-//            NamingEnumeration answer = context.search(IdentityStoreConfigConstants.groupSearchBase, searchFilter, searchCtls);
-//
-//            //Loop through the search results
-//            while (answer.hasMoreElements()) {
-//                SearchResult sr = (SearchResult) answer.next();
-//
-//
-//                //Print out the groups
-//
-//                Attributes attrs = sr.getAttributes();
-//                if (attrs != null) {
-//
-//
-//                    for (NamingEnumeration ae = attrs.getAll(); ae.hasMore(); ) {
-//                        Attributes attr = (Attributes) ae.next();
-//                        for (NamingEnumeration groupIds = attr.getIDs(); groupIds.hasMore(); ) {
-//                            String groupId = (String) groupIds.next();
-//                            Group.GroupBuilder group = new Group.GroupBuilder().setGroupId(groupId);
-//                            groupList.add(group);
-//                        }
-//                    }
-//                }
-//            }
-//
-//            context.close();
-//
-//        } catch (NamingException|CredentialStoreConnectorException e) {
-//            throw new IdentityStoreException("Error occured while listing groups of the user: " + e);
-//        }
-//        return groupList;
-//    }
 
 
     @Override
@@ -452,7 +360,7 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
             entry.put(attr);
 
         }
-
+        ;
         BasicAttribute objClass = new BasicAttribute("objectClass");
 
         objClass.add("top");
@@ -609,212 +517,456 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
         }
         return  primaryAttributeValue;
     }
-//I dint use to be one of the gang.Whta should be my motive?
-
-//
-//    public List<User.UserBuilder> getUserBuilderList(String attributeName, String filterPattern, int length)
-//            throws IdentityStoreException {
-//        // Get the max allowed row count if the length is -1.
-//        if (length == -1) {
-//            length = getMaxRowRetrievalCount();
-//        }
-//
-//
-//        List<User.UserBuilder> userList = new ArrayList<>();
-//        SearchControls searchControls = new SearchControls();
-//        searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-//        searchControls.setCountLimit(length);
-//        searchControls.setReturningAttributes(new String[]{DatabaseAttributeNames.User.USER_UNIQUE_ID});
-//
-//        try {
-//            DirContext context = connectionSource.getContext();
-//            NamingEnumeration answer = context.search(attributeName, getFinalFilters(filterPattern), searchControls);
-//            while (answer.hasMore()) {
-//                String userUniqueId = answer.toString();
-//                userList.add(new User.UserBuilder().setUserId(userUniqueId));
-//            }
-//
-//        } catch (NamingException|CredentialStoreConnectorException e) {
-//            throw new IdentityStoreException("An error occurred while getting the user ", e);
-//        }
-//
-//        return userList;
-//    }
-
-
-//    public List<User.UserBuilder> getAllUserBuilderList(String attributeName, String filterPattern) throws
-//            IdentityStoreException {
-//        return getUserBuilderList(attributeName, filterPattern, -1);
-//    }
-
-    @Override
-    public void updateGroupsOfUser(String s, List<String> list) throws IdentityStoreConnectorException {
-
-    }
-
-    @Override
-    public void updateGroupsOfUser(String s, List<String> list, List<String> list1)
-            throws IdentityStoreConnectorException {
-
-    }
 
     @Override
     public Map<String, String> addGroups(Map<String, List<Attribute>> attributes) throws IdentityStoreConnectorException {
+        IdentityStoreConnectorException identityStoreException = new IdentityStoreConnectorException();
+        Map<String, String> groupIdsToReturn = new HashMap<>();
+        attributes.entrySet().stream().forEach(entry -> {
+            try {
+                String groupId = addGroup(entry.getValue());
+                groupIdsToReturn.put(entry.getKey(), groupId);
+            } catch (IdentityStoreConnectorException e) {
+                identityStoreException.addSuppressed(e);
+            }
+        });
 
-        String connectorUniqueId = IdentityUserMgtUtil.generateUUID();
+        if (identityStoreException.getSuppressed().length > 0) {
+            throw identityStoreException;
+        }
+        return groupIdsToReturn;
+    }
+
+    @Override
+    public void updateGroupsOfUser(String groupIdentifier, List<String> users) throws IdentityStoreConnectorException {
+        String filter = IdentityStoreConfigConstants.groupNameListFilter;
+        filter.replaceAll("[?]", groupIdentifier);
+
+        DirContext context = null;
         try {
-            DirContext context= connectionSource.getContext();
+            context = connectionSource.getContext();
 
-
-
-            // Create a container set of attributes
-            Attributes container = new BasicAttributes();
-
-            // Create the objectclass to add
-            BasicAttribute objClasses = new BasicAttribute("objectClass");
-            objClasses.add("top");
-            objClasses.add("groupOfUniqueNames");
-            objClasses.add("groupOfForethoughtNames");
-
-            for(Attribute attributes: ){
+            for(String user : users) {
+                ModificationItem[] roleMods = new ModificationItem[]
+                        {
+                                new ModificationItem(DirContext.ADD_ATTRIBUTE, new BasicAttribute
+                                        (IdentityStoreConfigConstants.groupNameAttribute, user))
+                        };
+                context.modifyAttributes(groupIdentifier, roleMods);
 
             }
 
-
-
-//            // Assign the name and description to the group
-//            Attribute cn = new BasicAttribute("cn", name);
-//            Attribute desc = new BasicAttribute("description", description);
-//
-//            // Add these to the container
-//            container.put(objClasses);
-//            container.put(cn);
-//            container.put(desc);
-//
-//            // Create the entry
-//            context.createSubcontext(getGroupDN(name), container);
-
-
-
-
-
-
-        } catch (CredentialStoreConnectorException e) {
-            throw new IdentityStoreConnectorException("Error occured while establishing the connection" , e);
+        } catch (CredentialStoreConnectorException|NamingException e) {
+            throw  new IdentityStoreConnectorException("Error occured while updating users to the Group" , e);
         }
-
-
-//        String primaryAttributeValue = attributes.stream()
-//                .filter(attribute -> attribute.getAttributeName().equals(connectorUserId))
-//                .map(attribute -> attribute.getAttributeValue())
-//                .findFirst()
-//                .orElse(null);
-//
-//        if (StringUtils.isNullOrEmptyAfterTrim(primaryAttributeValue)) {
-//
-//            throw new IdentityStoreConnectorException("Primary Attribute " + connectorUserId +
-//                    " is not found among the " + "attribute list");
-//        }
-//        BasicAttribute attr;
-//        BasicAttributes entry = new BasicAttributes();
-//        int i=0;
-//        for (Attribute attribute : attributes) {
-//
-//            String name = attribute.getAttributeName();
-//            String value = attribute.getAttributeValue();
-//            attr = new BasicAttribute(name, value);
-//            entry.put(attr);
-//
-//        }
-//
-//        BasicAttribute objClass = new BasicAttribute("objectClass");
-//
-//        objClass.add("top");
-//        objClass.add("person");
-//        objClass.add("organizationalPerson");
-//        objClass.add("inetOrgPerson");
-//
-//        entry.put(objClass);
-//
-//
-//        try {
-//
-//            // get a handle to an Initial DirContext
-//            DirContext context=connectionSource.getContext();
-//
-//            context.createSubcontext("cn=" + primaryAttributeValue , entry);
-//
-//        } catch (NamingException|CredentialStoreConnectorException e) {
-//            throw  new IdentityStoreConnectorException("Error occured while adding Users to the Userstore", e);
-//        }
-//        return primaryAttributeValue;
-        return null;
-    }
-
-
-    @Override
-    public String updateGroupAttributes(String s, List<Attribute> list) throws IdentityStoreConnectorException {
-        return null;
     }
 
     @Override
-    public String updateGroupAttributes(String s, List<Attribute> list, List<Attribute> list1)
+    public void updateGroupsOfUser(String userIdentifier, List<String> groupIdentifiersToAdd,
+                                   List<String> groupIdentifiersToRemove)
             throws IdentityStoreConnectorException {
-        return null;
+
     }
 
+    public String addGroups(List<Attribute> attributes) throws IdentityStoreConnectorException {
+
+        String connectorUniqueId = IdentityUserMgtUtil.generateUUID();
+
+            String primaryAttributeValue = attributes.stream()
+                    .filter(attribute -> attribute.getAttributeName().equals(connectorUserId))
+                    .map(attribute -> attribute.getAttributeValue())
+                    .findFirst()
+                    .orElse(null);
+
+            if (StringUtils.isNullOrEmptyAfterTrim(primaryAttributeValue)) {
+
+                throw new IdentityStoreConnectorException("Primary Attribute " + connectorUserId +
+                        " is not found among the " + "attribute list");
+            }
+            BasicAttribute attr;
+            BasicAttributes entry = new BasicAttributes();
+            int i=0;
+            for (Attribute attribute : attributes) {
+
+                String name = attribute.getAttributeName();
+                String value = attribute.getAttributeValue();
+                attr = new BasicAttribute(name, value);
+                entry.put(attr);
+
+            }
+
+            BasicAttribute objClass = new BasicAttribute("objectClass");
+
+            objClass.add("top");
+            objClass.add("groupOfUniqueNames");
+            objClass.add("groupOfForethoughtNames");
+
+            entry.put(objClass);
+
+
+            try {
+
+                // get a handle to an Initial DirContext
+                DirContext context=connectionSource.getContext();
+
+                context.createSubcontext("cn=" + primaryAttributeValue , entry);
+
+            } catch (NamingException|CredentialStoreConnectorException e) {
+                throw  new IdentityStoreConnectorException("Error occured while adding Users to the Userstore", e);
+            }
+            return primaryAttributeValue;
+}
+
+
+
+
+    @Override
+    public String updateGroupAttributes(String groupIdentifier, List<Attribute> attributes) throws IdentityStoreConnectorException {
+        String primaryAttributeValue = attributes.stream()
+                .filter(attribute -> attribute.getAttributeName().equals(connectorUserId))
+                .map(attribute -> attribute.getAttributeValue())
+                .findFirst()
+                .orElse(null);
+
+        String userIdentifierNew = groupIdentifier;
+        try {
+            DirContext context=connectionSource.getContext();
+
+            if (!StringUtils.isNullOrEmptyAfterTrim(primaryAttributeValue)) {
+                ModificationItem[] mods = new ModificationItem[attributes.size()];
+
+                mods[0] = new ModificationItem(DirContext.REPLACE_ATTRIBUTE,
+                        new BasicAttribute(groupIdentifier, primaryAttributeValue));
+
+                String name = IdentityStoreConfigConstants.usernameSearchFilter.replaceAll("[?]" , groupIdentifier);
+                // Perform the requested modifications on the named object
+
+                context.modifyAttributes( name , mods);
+                userIdentifierNew=primaryAttributeValue;
+                attributes.remove(userIdentifierNew);
+
+                int i=0;
+                for (Attribute attribute : attributes) {
+                    if(attribute.getAttributeName()!=primaryAttributeValue) {
+                        mods[i] = new ModificationItem(DirContext.REPLACE_ATTRIBUTE,
+                                new BasicAttribute(attribute.getAttributeName(), attribute.getAttributeValue()));
+                        i++;
+                    }
+                }
+            }
+
+        } catch (NamingException|CredentialStoreConnectorException e) {
+            throw  new IdentityStoreConnectorException("Error occurred while updating user.", e);
+        }
+        return userIdentifierNew;
+    }
+
+    @Override
+    public String updateGroupAttributes(String groupIdentifier, List<Attribute> attributesToAdd,
+                                        List<Attribute> attributesToRemove) throws IdentityStoreConnectorException {
+        //PATCH operation
+
+        // Fetch the existing attributes of the user
+        List<Attribute> currentAttributes = getUserAttributeValues(groupIdentifier);
+
+        // Filter the attributes to add and update
+        // If the same attribute is present in the database already, update the value.
+
+        Map<Boolean, List<Attribute>> attributeFilteredMap = attributesToAdd.stream()
+                .collect(Collectors.partitioningBy(a -> currentAttributes.parallelStream().anyMatch(ca -> ca
+                        .getAttributeName().equals(a.getAttributeName()))));
+
+        List<Attribute> filteredAttributesToAdd = attributeFilteredMap.get(false);
+        List<Attribute> filteredAttributesToUpdate = attributeFilteredMap.get(true);
+        {
+            return null;
+        }
+    }
     @Override
     public void deleteGroup(String connectorGroupId) throws IdentityStoreConnectorException {
 
+        String groupName=IdentityStoreConfigConstants.groupNameSearchFilter.replaceAll("[?]",connectorGroupId);
         try{
 
             DirContext context = connectionSource.getContext();
-            context.unbind("ou =" +connectorGroupId);
+            context.unbind(groupName);
 
         } catch (CredentialStoreConnectorException e) {
             throw  new IdentityStoreConnectorException("Error occured while creating the connection", e);
         } catch (NamingException e) {
             throw new IdentityStoreConnectorException("User cannot be found in the userstore" , e);
         }
+    }
+
+    @Override
+    public void updateUsersOfGroup(String connectorGroupId, List<String> list) throws IdentityStoreConnectorException {
+
+        String filter= LDAPConstants.GROUP_NAME_LIST_FILTER.replaceAll("[?]", connectorUserId);
+        SearchControls searchControls=new SearchControls();
+        searchControls.setReturningAttributes(new String[]{connectorUserId});
+
 
     }
 
     @Override
-    public void updateUsersOfGroup(String s, List<String> list) throws IdentityStoreConnectorException {
-
-    }
-
-    @Override
-    public void updateUsersOfGroup(String s, List<String> list, List<String> list1)
+    public void updateUsersOfGroup(String groupIdentifier, List<String> userIdentifiersToAdd,
+                                   List<String> userIdentifiersToRemove)
             throws IdentityStoreConnectorException {
 
     }
 
 
     @Override
-    public void removeAddedUsersInAFailure(List<String> list) throws IdentityStoreConnectorException {
-
+    public void removeAddedUsersInAFailure(List<String> connectorUserIds) throws IdentityStoreConnectorException {
+        try {
+            DirContext context = connectionSource.getContext();
+            for (String userId : connectorUserIds) {
+                deleteUser(userId, context);
+            }
+        } catch (CredentialStoreConnectorException e) {
+            throw new IdentityStoreConnectorException("Error while establishing the connection", e);
+        }
     }
 
     @Override
-    public void removeAddedGroupsInAFailure(List<String> list) throws IdentityStoreConnectorException {
-
+    public void removeAddedGroupsInAFailure(List<String> connectorGroupIds) throws IdentityStoreConnectorException {
+        try {
+            DirContext context = connectionSource.getContext();
+            for (String userId : connectorGroupIds) {
+                deleteUser(userId, context);
+            }
+        } catch (CredentialStoreConnectorException e) {
+            throw new IdentityStoreConnectorException("Error while establishing the connection", e);
+        }
     }
+
     @Override
     public String getConnectorUserId(String attributeName, String attributeValue) throws UserNotFoundException,
             IdentityStoreConnectorException {
-        return connectorUserId;
+        String filter="(&("+attributeName + "=" + attributeValue + "))";
+        String userId;
+
+        try {
+            DirContext context = connectionSource.getContext();
+
+            SearchControls searchControls = new SearchControls();
+            searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            searchControls.setReturningAttributes(new String[]{DatabaseAttributeNames.User.USER_UNIQUE_ID});
+
+            NamingEnumeration<SearchResult> answer = context.search(IdentityStoreConfigConstants.userSearchBase,
+                    filter, searchControls);
+
+            if (answer.hasMore()) {
+               userId = answer.next().getAttributes().toString();
+                return  userId;
+            }
+
+            else {
+                throw new UserNotFoundException("User not found with the given attribute");
+            }
+
+        } catch (NamingException|CredentialStoreConnectorException e) {
+            throw new IdentityStoreConnectorException("Error occured while retreiving Group Attribute values" + e);
+        }
+
     }
 
 
+
+
+
     @Override
-    public List<String> listConnectorUserIds(String s, String s1, int i, int i1)
+    public List<String> listConnectorUserIds(String attributeName, String attributeValue, int startIndex, int length)
             throws IdentityStoreConnectorException {
-        return null;
+
+        if (startIndex > 0) {
+            startIndex--;
+        }
+        // Get the max allowed row count if the length is -1.
+
+        if (length == -1) {
+            length = getMaxRowRetrievalCount();
+        }
+
+        String filter="(&("+attributeName + "=" + attributeValue + "))";
+        String userId;
+
+        List<String> users = new ArrayList<>();
+        try {
+            DirContext context=connectionSource.getContext();
+
+            SearchControls searchControls=new SearchControls();
+            searchControls.setCountLimit(length);
+            searchControls.setSearchScope(startIndex);
+            searchControls.setReturningAttributes(new String[]{DatabaseAttributeNames.Group.GROUP_UNIQUE_ID});
+
+            NamingEnumeration<SearchResult> answer = context.search(IdentityStoreConfigConstants.groupSearchBase,
+                    filter, searchControls);
+
+            if (answer.hasMore()) {
+                userId = answer.next().getAttributes().toString();
+                users.add(userId);
+
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug("{} groups retrieved for filter pattern {} from identity store: {}.", users.size(),
+                        attributeValue, identityStoreId);
+            }
+        }
+
+        catch (CredentialStoreConnectorException e) {
+            throw new IdentityStoreConnectorException("Error occurred while retrieving group list." + e);
+        } catch (NamingException e) {
+            throw new IdentityStoreConnectorException("Error occurred while retrieving group list." + e);
+        }
+
+
+        return users;
+    }
+
+
+
+    @Override
+    public String getConnectorGroupId(String attributeName, String attributeValue) throws GroupNotFoundException,
+            IdentityStoreConnectorException {
+
+
+        String filter="(&("+attributeName + "=" + attributeValue + "))";
+        String groupId;
+
+        try {
+            DirContext context = connectionSource.getContext();
+
+            SearchControls searchControls = new SearchControls();
+            searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            searchControls.setReturningAttributes(new String[]{DatabaseAttributeNames.Group.GROUP_UNIQUE_ID});
+
+            NamingEnumeration<SearchResult> answer = context.search(IdentityStoreConfigConstants.groupSearchBase,
+                    filter, searchControls);
+
+
+            if (answer.hasMore()) {
+                 groupId = answer.next().getAttributes().toString();
+                return  groupId;
+            }
+            else {
+                throw new GroupNotFoundException("User not found with the given attribute");
+            }
+
+
+        } catch (NamingException|CredentialStoreConnectorException e) {
+            throw new IdentityStoreConnectorException("Error occured while retreiving Group Attribute values" + e);
+        }
+
     }
 
     @Override
-    public List<String> listConnectorUserIdsByPattern(String s, String s1, int i, int i1)
+    public List<String> listConnectorGroupIds(String attributeName, String attributeValue, int startIndex, int length)
+            throws IdentityStoreConnectorException {
+        // Database handles start index as 0
+        if (startIndex > 0) {
+            startIndex--;
+        }
+        // Get the max allowed row count if the length is -1.
+        if (length == -1) {
+            length = getMaxRowRetrievalCount();
+        }
+
+        String filter="(&("+attributeName + "=" + attributeValue + "))";
+        String groupId;
+
+        List<String> groups = new ArrayList<>();
+        try {
+            DirContext context=connectionSource.getContext();
+
+            SearchControls searchControls=new SearchControls();
+            searchControls.setCountLimit(length);
+            searchControls.setSearchScope(startIndex);
+            searchControls.setReturningAttributes(new String[]{DatabaseAttributeNames.Group.GROUP_UNIQUE_ID});
+
+            NamingEnumeration<SearchResult> answer = context.search(IdentityStoreConfigConstants.groupSearchBase,
+                    filter, searchControls);
+
+            if (answer.hasMore()) {
+                groupId = answer.next().getAttributes().toString();
+                groups.add(groupId);
+
+            }
+
+        if (log.isDebugEnabled()) {
+            log.debug("{} groups retrieved for filter pattern {} from identity store: {}.", groups.size(),
+                    attributeValue, identityStoreId);
+        }
+        }
+
+        catch (CredentialStoreConnectorException e) {
+            throw new IdentityStoreConnectorException("Error occurred while retrieving group list." + e);
+        } catch (NamingException e) {
+            throw new IdentityStoreConnectorException("Error occurred while retrieving group list." + e);
+        }
+
+
+        return groups;
+    }
+
+    @Override
+    public List<String> listConnectorGroupIdsByPattern(String attributeName, String filterPattern, int startIndex, int
+            length)
+            throws IdentityStoreConnectorException {
+
+        // Database handles start index as 0
+        if (startIndex > 0) {
+            startIndex--;
+        }
+        // Get the max allowed row count if the length is -1.
+        if (length == -1) {
+            length = getMaxRowRetrievalCount();
+        }
+
+
+        List<String> groups = new ArrayList<>();
+        try {
+            filterPattern = getFinalFilters(filterPattern);
+
+            String filter="(&("+attributeName + "=" + filterPattern + "))";
+            String groupId;
+            DirContext context=connectionSource.getContext();
+
+            SearchControls searchControls=new SearchControls();
+            searchControls.setCountLimit(length);
+            searchControls.setSearchScope(startIndex);
+            searchControls.setReturningAttributes(new String[]{DatabaseAttributeNames.Group.GROUP_UNIQUE_ID});
+
+            NamingEnumeration<SearchResult> answer = context.search(IdentityStoreConfigConstants.groupSearchBase,
+                    filter, searchControls);
+
+            if (answer.hasMore()) {
+                groupId = answer.next().getAttributes().toString();
+                groups.add(groupId);
+
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug("{} groups retrieved for filter pattern {} from identity store: {}.", groups.size(),
+                        filterPattern, identityStoreId);
+            }
+        }
+
+        catch (CredentialStoreConnectorException e) {
+            throw new IdentityStoreConnectorException("Error occurred while retrieving group list." + e);
+        } catch (NamingException e) {
+            throw new IdentityStoreConnectorException("Error occurred while retrieving group list." + e);
+        } catch (IdentityStoreException e) {
+            throw new IdentityStoreConnectorException("Error occurred while retrieving group list." + e);
+        }
+
+
+        return groups;
+    }
+    @Override
+    public List<String> listConnectorUserIdsByPattern(String attributeName, String filterPattern, int startIndex, int
+            length)
             throws IdentityStoreConnectorException {
         return null;
     }
@@ -880,6 +1032,105 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
         }
     }
 
+
+    protected NamingEnumeration<SearchResult> searchForGroup(String searchFilter,
+                                                             String[] returnedAtts,
+                                                             DirContext dirContext)
+            throws IdentityStoreException {
+        SearchControls searchCtls = new SearchControls();
+        searchCtls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+        String searchBases = LDAPConstants.GROUP_SEARCH_BASE;
+        if (returnedAtts != null && returnedAtts.length > 0) {
+            searchCtls.setReturningAttributes(returnedAtts);
+        }
+
+        if (log.isDebugEnabled()) {
+            try {
+                log.debug("Searching for group with SearchFilter: " + searchFilter + " in SearchBase: " +
+                        dirContext.getNameInNamespace());
+            } catch (NamingException e) {
+                log.debug("Error while getting DN of search base", e);
+            }
+            if (returnedAtts == null) {
+                log.debug("No attributes requested");
+            } else {
+                for (String attribute : returnedAtts) {
+                    log.debug("Requesting attribute :" + attribute);
+                }
+            }
+        }
+
+        String[] searchBaseArray = searchBases.split("#");
+        NamingEnumeration<SearchResult> answer = null;
+
+        try {
+            for (String searchBase : searchBaseArray) {
+                answer = dirContext.search(escapeDNForSearch(searchBase), searchFilter, searchCtls);
+                if (answer.hasMore()) {
+                    return answer;
+                }
+            }
+        } catch (PartialResultException e) {
+            // can be due to referrals in AD. so just ignore error
+            String errorMessage = "Error occurred while search group for filter : " + searchFilter;
+            throw new IdentityStoreException(errorMessage, e);
+
+        } catch (NamingException e) {
+            String errorMessage = "Error occurred while search group for filter : " + searchFilter;
+            if (log.isDebugEnabled()) {
+                log.debug(errorMessage, e);
+            }
+            throw new IdentityStoreException(errorMessage, e);
+        }
+        return answer;
+
+    }
+
+    private String escapeDNForSearch(String dn) {
+        boolean replaceEscapeCharacters = true;
+
+        String replaceEscapeCharactersAtUserLoginString = LDAPConstants.USER_LOGIN_STRING;
+
+        if (replaceEscapeCharactersAtUserLoginString != null) {
+            replaceEscapeCharacters = Boolean
+                    .parseBoolean(replaceEscapeCharactersAtUserLoginString);
+            if (log.isDebugEnabled()) {
+                log.debug("Replace escape characters configured to: "
+                        + replaceEscapeCharactersAtUserLoginString);
+            }
+        }
+        if (replaceEscapeCharacters) {
+            return dn.replace("\\\\", "\\\\\\").replace("\\\"", "\\\\\"");
+        } else {
+            return dn;
+        }
+
+
+    }
+
+    public void deleteUser(String userId , DirContext context) throws IdentityStoreConnectorException {
+
+        String username=IdentityStoreConfigConstants.usernameSearchFilter.replaceAll("[?]", userId);
+        try{
+            context.unbind(username);
+
+        } catch (NamingException e) {
+            throw new IdentityStoreConnectorException("User cannot be found in the userstore" , e);
+        }
+
+    }
+
+    public void deleteGroup(String connectorGroupId, DirContext context) throws IdentityStoreConnectorException {
+
+        String groupName = IdentityStoreConfigConstants.groupNameSearchFilter.replaceAll("[?]", connectorGroupId);
+        try {
+
+            context.unbind(groupName);
+
+        } catch (NamingException e) {
+            throw new IdentityStoreConnectorException("User cannot be found in the userstore", e);
+        }
+    }
     private String getFinalFilters(String filterPattern) throws IdentityStoreException {
 
         if (filterPattern.contains("?") || filterPattern.contains("**")) {
@@ -971,99 +1222,4 @@ public class LDAPIdentityStoreConnector implements IdentityStoreConnector {
         return answer;
 
     }
-
-    protected NamingEnumeration<SearchResult> searchForGroup(String searchFilter,
-                                                             String[] returnedAtts,
-                                                             DirContext dirContext)
-            throws IdentityStoreException {
-        SearchControls searchCtls = new SearchControls();
-        searchCtls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        String searchBases = LDAPConstants.GROUP_SEARCH_BASE;
-        if (returnedAtts != null && returnedAtts.length > 0) {
-            searchCtls.setReturningAttributes(returnedAtts);
-        }
-
-        if (log.isDebugEnabled()) {
-            try {
-                log.debug("Searching for group with SearchFilter: " + searchFilter + " in SearchBase: " +
-                        dirContext.getNameInNamespace());
-            } catch (NamingException e) {
-                log.debug("Error while getting DN of search base", e);
-            }
-            if (returnedAtts == null) {
-                log.debug("No attributes requested");
-            } else {
-                for (String attribute : returnedAtts) {
-                    log.debug("Requesting attribute :" + attribute);
-                }
-            }
-        }
-
-        String[] searchBaseAraay = searchBases.split("#");
-        NamingEnumeration<SearchResult> answer = null;
-
-        try {
-            for (String searchBase : searchBaseAraay) {
-                answer = dirContext.search(escapeDNForSearch(searchBase), searchFilter, searchCtls);
-                if (answer.hasMore()) {
-                    return answer;
-                }
-            }
-        } catch (PartialResultException e) {
-            // can be due to referrals in AD. so just ignore error
-            String errorMessage = "Error occurred while search group for filter : " + searchFilter;
-            throw new IdentityStoreException(errorMessage, e);
-
-        } catch (NamingException e) {
-            String errorMessage = "Error occurred while search group for filter : " + searchFilter;
-            if (log.isDebugEnabled()) {
-                log.debug(errorMessage, e);
-            }
-            throw new IdentityStoreException(errorMessage, e);
-        }
-        return answer;
-
-    }
-
-    private String escapeDNForSearch(String dn) {
-        boolean replaceEscapeCharacters = true;
-
-        String replaceEscapeCharactersAtUserLoginString = LDAPConstants.USER_LOGIN_STRING;
-
-        if (replaceEscapeCharactersAtUserLoginString != null) {
-            replaceEscapeCharacters = Boolean
-                    .parseBoolean(replaceEscapeCharactersAtUserLoginString);
-            if (log.isDebugEnabled()) {
-                log.debug("Replace escape characters configured to: "
-                        + replaceEscapeCharactersAtUserLoginString);
-            }
-        }
-        if (replaceEscapeCharacters) {
-            return dn.replace("\\\\", "\\\\\\").replace("\\\"", "\\\\\"");
-        } else {
-            return dn;
-        }
-
-
-    }
-    @Override
-    public String getConnectorGroupId(String s, String s1) throws GroupNotFoundException,
-            IdentityStoreConnectorException {
-        return null;
-    }
-
-    @Override
-    public List<String> listConnectorGroupIds(String s, String s1, int i, int i1)
-            throws IdentityStoreConnectorException {
-        return null;
-    }
-
-    @Override
-    public List<String> listConnectorGroupIdsByPattern(String s, String s1, int i, int i1)
-            throws IdentityStoreConnectorException {
-        return null;
-    }
-
-
-
 }

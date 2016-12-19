@@ -27,13 +27,13 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.carbon.datasource.core.api.DataSourceService;
-import org.wso2.carbon.identity.mgt.constant.UserCoreConstants;
 import org.wso2.carbon.identity.mgt.store.connector.CredentialStoreConnectorFactory;
 import org.wso2.carbon.identity.mgt.store.connector.IdentityStoreConnectorFactory;
 import org.wso2.carbon.identity.mgt.util.PasswordHandler;
 import org.wso2.carbon.userstore.ldap.connector.factory.LDAPCredentialStoreConnectorFactory;
 import org.wso2.carbon.userstore.ldap.connector.factory.LDAPIdentityStoreConnectorFactory;
 import org.wso2.carbon.userstore.ldap.datasource.utils.DatabaseUtil;
+import org.wso2.carbon.userstore.ldap.datasource.utils.LDAPConstants;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -110,10 +110,10 @@ public class ConnectorComponent {
     protected void registerPasswordHandler(PasswordHandler passwordHandler, Map<String, String> properties) {
 
         if (passwordHandler != null) {
-            DatabaseUtil.getInstance().setPasswordHandler(properties.get(UserCoreConstants.PASSWORD_HANDLER_NAME),
+            DatabaseUtil.getInstance().setPasswordHandler(properties.get(LDAPConstants.PASSWORD_HANDLER_NAME),
                     passwordHandler);
             if (log.isDebugEnabled()) {
-                log.debug("Password handler for name {} registered.", properties.get(UserCoreConstants
+                log.debug("Password handler for name {} registered.", properties.get(LDAPConstants
                         .PASSWORD_HANDLER_NAME));
             }
         }
@@ -121,10 +121,10 @@ public class ConnectorComponent {
 
     protected void unregisterPasswordHandler(PasswordHandler passwordHandler, Map<String, String> properties) {
 
-        DatabaseUtil.getInstance().setPasswordHandler(properties.get(UserCoreConstants.PASSWORD_HANDLER_NAME), null);
+        DatabaseUtil.getInstance().setPasswordHandler(properties.get(LDAPConstants.PASSWORD_HANDLER_NAME), null);
 
         if (log.isDebugEnabled()) {
-            log.debug("Password handler for name {} unregistered.", properties.get(UserCoreConstants
+            log.debug("Password handler for name {} unregistered.", properties.get(LDAPConstants
                     .PASSWORD_HANDLER_NAME));
         }
     }

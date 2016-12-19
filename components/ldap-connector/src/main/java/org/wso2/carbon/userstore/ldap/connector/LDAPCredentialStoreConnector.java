@@ -137,32 +137,21 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
     }
 
     @Override
-    public void updateCredential(Callback[] callbacks) throws CredentialStoreConnectorException {
-        Map<String, String> userData = null;
-        char[] password = null;
+    public String addCredential(List<Callback> list) throws CredentialStoreConnectorException {
+        return null;
+    }
 
-        for (Callback callback : callbacks) {
-            if (callback instanceof IdentityCallback) {
-                userData = (Map<String, String>) ((IdentityCallback) callback).getContent();
-            } else if (callback instanceof PasswordCallback) {
-                password = ((PasswordCallback) callback).getPassword();
-            }
-        }
 
-        if (userData == null || userData.get(LDAPConstants.USER_ID) == null) {
-            throw new CredentialStoreConnectorException("No enough data to update the credential");
-        }
-        try {
-            updateCredential(userData.get(LDAPConstants.USER_ID),password);
-        } catch (UnsupportedEncodingException e) {
-            throw  new CredentialStoreConnectorException("Error occured while updating the credential" ,e);
-        } catch (NamingException e) {
-            throw  new CredentialStoreConnectorException("Error occured while updating the credential" ,e);
-        }
+
+
+
+    @Override
+    public Map<String, String> addCredentials(Map<String, List<Callback>> map) throws CredentialStoreConnectorException {
+        return null;
     }
 
     @Override
-    public void updateCredential(String username, Callback[] callbacks) throws CredentialStoreConnectorException {
+    public String updateCredentials(String username, List<Callback> callbacks) throws CredentialStoreConnectorException {
         char[] password = null;
         for (Callback callback : callbacks) {
             if (callback instanceof PasswordCallback) {
@@ -172,52 +161,19 @@ public class LDAPCredentialStoreConnector implements CredentialStoreConnector {
 
         try {
             updateCredential(username, password);
-        } catch (UnsupportedEncodingException e) {
-            throw  new CredentialStoreConnectorException("Error occured while updating the credential" ,e);
-        } catch (NamingException e) {
-            throw  new CredentialStoreConnectorException("Error occured while updating the credential" ,e);
+        } catch (UnsupportedEncodingException|NamingException e) {
+            throw  new CredentialStoreConnectorException("Error occured while updationg the Credentials" + e);
         }
-    }
-
-    @Override
-    public String addCredential(Callback[] callbacks) throws CredentialStoreConnectorException {
-        char[] password = null;
-
-        for (Callback callback : callbacks) {
-            if (callback instanceof PasswordCallback) {
-                if (password == null) {
-                    password = ((PasswordCallback) callback).getPassword();
-                } else {
-                    throw new CredentialStoreConnectorException("Multiple passwords found");
-                }
-            }
-        }
-
-        String username = IdentityUserMgtUtil.generateUUID();
-
-        addCredential(username, password);
         return username;
     }
 
     @Override
-    public Map<String, String> addCredentials(Map<String, List<Callback>> map) throws CredentialStoreConnectorException {
+    public String updateCredentials(String s, List<Callback> list, List<Callback> list1) throws CredentialStoreConnectorException {
         return null;
     }
 
-    @Override
-    public void addCredential(String username, Callback[] callbacks) throws CredentialStoreConnectorException {
-        char[] password = null;
-        for (Callback callback : callbacks) {
-            if (callback instanceof PasswordCallback) {
-                password = ((PasswordCallback) callback).getPassword();
-            }
-        }
 
-        if (password == null) {
-            throw new CredentialStoreConnectorException("Data required for authentication is missing.");
-        }
-        addCredential(username, password);
-    }
+
 
     @Override
     public void deleteCredential(String s) throws CredentialStoreConnectorException {
@@ -299,6 +255,82 @@ private void addCredential(String username, char[] password )
 {
 
 }
+
+
+    public void addCredential(String username, Callback[] callbacks) throws CredentialStoreConnectorException {
+        char[] password = null;
+        for (Callback callback : callbacks) {
+            if (callback instanceof PasswordCallback) {
+                password = ((PasswordCallback) callback).getPassword();
+            }
+        }
+
+        if (password == null) {
+            throw new CredentialStoreConnectorException("Data required for authentication is missing.");
+        }
+        addCredential(username, password);
+    }
+
+    public String addCredential(Callback[] callbacks) throws CredentialStoreConnectorException {
+        char[] password = null;
+
+        for (Callback callback : callbacks) {
+            if (callback instanceof PasswordCallback) {
+                if (password == null) {
+                    password = ((PasswordCallback) callback).getPassword();
+                } else {
+                    throw new CredentialStoreConnectorException("Multiple passwords found");
+                }
+            }
+        }
+
+        String username = IdentityUserMgtUtil.generateUUID();
+
+        addCredential(username, password);
+        return username;
+    }
+
+    public void updateCredential(Callback[] callbacks) throws CredentialStoreConnectorException {
+        Map<String, String> userData = null;
+        char[] password = null;
+
+        for (Callback callback : callbacks) {
+            if (callback instanceof IdentityCallback) {
+                userData = (Map<String, String>) ((IdentityCallback) callback).getContent();
+            } else if (callback instanceof PasswordCallback) {
+                password = ((PasswordCallback) callback).getPassword();
+            }
+        }
+
+        if (userData == null || userData.get(LDAPConstants.USER_ID) == null) {
+            throw new CredentialStoreConnectorException("No enough data to update the credential");
+        }
+        try {
+            updateCredential(userData.get(LDAPConstants.USER_ID),password);
+        } catch (UnsupportedEncodingException e) {
+            throw  new CredentialStoreConnectorException("Error occured while updating the credential" ,e);
+        } catch (NamingException e) {
+            throw  new CredentialStoreConnectorException("Error occured while updating the credential" ,e);
+        }
+    }
+
+
+    public void updateCredential(String username, Callback[] callbacks) throws CredentialStoreConnectorException {
+        char[] password = null;
+        for (Callback callback : callbacks) {
+            if (callback instanceof PasswordCallback) {
+                password = ((PasswordCallback) callback).getPassword();
+            }
+        }
+
+        try {
+            updateCredential(username, password);
+        } catch (UnsupportedEncodingException e) {
+            throw  new CredentialStoreConnectorException("Error occured while updating the credential" ,e);
+        } catch (NamingException e) {
+            throw  new CredentialStoreConnectorException("Error occured while updating the credential" ,e);
+        }
+    }
 
 }
 
